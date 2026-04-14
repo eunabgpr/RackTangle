@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:racktangle/Levels/Level1.dart';
 
 void main() {
@@ -22,14 +23,31 @@ class RacktangleApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final AudioPlayer _sfxPlayer = AudioPlayer();
 
   static const Color _backgroundColor = Color(0xFF171725);
   static const double _topImageOffset = 10;
   static const double _gapCircuitsToRack = 2;
   static const double _gapRackToTangle = 8;
   static const double _gapTangleToUntangle = 24;
+
+  @override
+  void dispose() {
+    _sfxPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playButtonSfx() async {
+    await _sfxPlayer.play(AssetSource('sfx/sfx_button.ogg'));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +84,11 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                await _playButtonSfx();
+                if (!context.mounted) {
+                  return;
+                }
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (context) => const Level1Screen(),
@@ -99,7 +121,9 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _playButtonSfx();
+                  },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF7D7DB2),
                     side: const BorderSide(
@@ -121,7 +145,9 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _playButtonSfx();
+                  },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF7D7DB2),
                     side: const BorderSide(

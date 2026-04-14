@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:racktangle/Levels/Level2.dart';
 
@@ -37,6 +38,7 @@ class _Level1ScreenState extends State<Level1Screen> {
   ];
 
   final GlobalKey _stackKey = GlobalKey();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
 
   // Wire i starts at modem port _modemPortByWire[i] and ends at CPU port _cpuPortByWire[i].
   List<int> _modemPortByWire = [0, 2];
@@ -57,7 +59,13 @@ class _Level1ScreenState extends State<Level1Screen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _sfxPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playSfx(String fileName) async {
+    await _sfxPlayer.stop();
+    await _sfxPlayer.play(AssetSource('sfx/$fileName'));
   }
 
   void _startTimer() {
@@ -90,6 +98,7 @@ class _Level1ScreenState extends State<Level1Screen> {
     _levelCleared = true;
     _timer?.cancel();
     _showingClearDialog = true;
+    unawaited(_playSfx('sfx_complete.mp3'));
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
@@ -163,6 +172,7 @@ class _Level1ScreenState extends State<Level1Screen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
+                        unawaited(_playSfx('sfx_button.ogg'));
                         Navigator.of(dialogContext).pop();
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute<void>(
@@ -192,6 +202,7 @@ class _Level1ScreenState extends State<Level1Screen> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
+                        unawaited(_playSfx('sfx_button.ogg'));
                         Navigator.of(dialogContext).pop();
                         Navigator.of(context)
                             .popUntil((route) => route.isFirst);
@@ -265,6 +276,7 @@ class _Level1ScreenState extends State<Level1Screen> {
     if (local == null) {
       return;
     }
+    unawaited(_playSfx('sfx_remove.wav'));
     setState(() {
       _draggingWire = wireIndex;
       _dragPosition = local;
@@ -284,9 +296,13 @@ class _Level1ScreenState extends State<Level1Screen> {
 
   void _onWireDragEnd(int wireIndex, List<Offset> modemPorts) {
     final drop = _dragPosition;
+    final previousPort = _modemPortByWire[wireIndex];
     if (drop != null) {
       final targetPort = _nearestPortIndex(drop.dx, modemPorts);
       _moveWireToPort(wireIndex, targetPort);
+      if (targetPort != previousPort) {
+        unawaited(_playSfx('sfx_attach.wav'));
+      }
     }
     setState(() {
       _draggingWire = null;
@@ -352,7 +368,10 @@ class _Level1ScreenState extends State<Level1Screen> {
             width: _buttonSize,
             height: _buttonSize,
             child: OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                unawaited(_playSfx('sfx_button.ogg'));
+                Navigator.of(context).pop();
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor: _outlineColor,
                 side: const BorderSide(color: _outlineColor, width: 2),
@@ -376,7 +395,9 @@ class _Level1ScreenState extends State<Level1Screen> {
               width: _buttonSize,
               height: _buttonSize,
               child: OutlinedButton(
-                onPressed: () {},
+                onPressed: () {
+                  unawaited(_playSfx('sfx_button.ogg'));
+                },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _outlineColor,
                   side: const BorderSide(color: _outlineColor, width: 2),
