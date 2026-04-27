@@ -49,10 +49,13 @@ class _Level1ScreenState extends State<Level1Screen> {
   Timer? _timer;
   bool _levelCleared = false;
   bool _showingClearDialog = false;
+  bool _isPaused = false;
+  int _currentCrossingCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _isPaused = false;
     _startTimer();
   }
 
@@ -69,9 +72,12 @@ class _Level1ScreenState extends State<Level1Screen> {
   }
 
   void _startTimer() {
+    if (_isPaused) {
+      return;
+    }
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted || _levelCleared) {
+      if (!mounted || _levelCleared || _isPaused) {
         timer.cancel();
         return;
       }
@@ -81,10 +87,195 @@ class _Level1ScreenState extends State<Level1Screen> {
     });
   }
 
+  void _pauseTimer() {
+    _timer?.cancel();
+    _isPaused = true;
+  }
+
+  void _resumeTimer() {
+    if (_levelCleared) {
+      return;
+    }
+    _isPaused = false;
+    _startTimer();
+  }
+
+  void _resetLevel() {
+    setState(() {
+      _modemPortByWire = [0, 2];
+      _draggingWire = null;
+      _dragPosition = null;
+      _elapsedSeconds = 0;
+      _isPaused = false;
+      _levelCleared = false;
+      _showingClearDialog = false;
+    });
+    _startTimer();
+  }
+
   String _formatTime(int totalSeconds) {
     final minutes = totalSeconds ~/ 60;
     final seconds = totalSeconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _showPauseDialog(int crossingCount) async {
+    if (_showingClearDialog) {
+      return;
+    }
+    _pauseTimer();
+
+    var shouldResume = false;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: const Color(0xFF232545),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: const BorderSide(color: Color(0xFF6D7391)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFF1D2455),
+                    border: Border.all(color: Colors.blueAccent, width: 1.4),
+                  ),
+                  child: const Icon(Icons.pause,
+                      color: Colors.blueAccent, size: 48),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'LEVEL 1',
+                  style: TextStyle(
+                    color: Color(0xFF8A90A8),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Paused',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 54,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _StatCard(
+                        value: _formatTime(_elapsedSeconds),
+                        label: 'Time',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _StatCard(
+                        value: '$crossingCount',
+                        label: 'Crossings Left',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      unawaited(_playSfx('sfx_button.ogg'));
+                      shouldResume = true;
+                      Navigator.of(dialogContext).pop();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF7E84A4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Resume',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      unawaited(_playSfx('sfx_button.ogg'));
+                      Navigator.of(dialogContext).pop();
+                      _resetLevel();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF7E84A4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Restart Level',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      unawaited(_playSfx('sfx_button.ogg'));
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF7E84A4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Back to home',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (shouldResume) {
+      _resumeTimer();
+    }
   }
 
   void _checkAndHandleLevelClear(int crossingCount) {
@@ -397,6 +588,7 @@ class _Level1ScreenState extends State<Level1Screen> {
               child: OutlinedButton(
                 onPressed: () {
                   unawaited(_playSfx('sfx_button.ogg'));
+                  _showPauseDialog(_currentCrossingCount);
                 },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _outlineColor,
@@ -452,6 +644,7 @@ class _Level1ScreenState extends State<Level1Screen> {
             }
 
             final crossingCount = _crossingsFromLines(wireStarts, wireEnds);
+            _currentCrossingCount = crossingCount;
             _checkAndHandleLevelClear(crossingCount);
 
             return Stack(
