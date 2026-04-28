@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:racktangle/Levels/Level7.dart';
 
 class Level6Screen extends StatefulWidget {
   const Level6Screen({super.key});
@@ -72,25 +74,23 @@ class _Level6ScreenState extends State<Level6Screen> {
   ];
 
   final GlobalKey _stackKey = GlobalKey();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
 
   // 0-1 router to switches, draggable on router.
   // Blue (wire 0) starts on right; green (wire 1) starts on left.
   List<int> _routerPortByWire = [3, 0];
 
-  // 2-4 left switch starts, draggable on left switch.
-  List<int> _leftSwitchStartPortByWire = [4, 1, 3];
-
-  // 5 right switch start, draggable on right switch.
-  List<int> _rightSwitchStartPortByWire = [4];
+  // 2-5 switch starts, draggable on either switch.
+  List<int> _switchStartPortByWire = [4, 1, 3, 5];
 
   // 6 cpu to cpu, draggable on both CPUs.
   List<int> _cpuLeftPortByWire = [0];
   List<int> _cpuRightPortByWire = [2];
 
-  // Fixed ends.
+  // Blue/red wires can connect to any port on either switch.
   List<int> _routerEndLeftSwitchPort = [1];
   List<int> _routerEndRightSwitchPort = [1];
-  List<int> _interSwitchEndRightPort = [3, 5];
+  List<int> _interSwitchEndRightPort = [9, 11];
   List<int> _toRightCpuEndPort = [0];
   List<int> _toLeftCpuEndPort = [1];
 
@@ -113,7 +113,13 @@ class _Level6ScreenState extends State<Level6Screen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _sfxPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playSfx(String fileName) async {
+    await _sfxPlayer.stop();
+    await _sfxPlayer.play(AssetSource('sfx/$fileName'));
   }
 
   void _startTimer() {
@@ -147,6 +153,7 @@ class _Level6ScreenState extends State<Level6Screen> {
     if (!_showPrePlayModule) {
       return;
     }
+    unawaited(_playSfx('sfx_button.ogg'));
     setState(() {
       _showPrePlayModule = false;
       _isPaused = false;
@@ -165,13 +172,12 @@ class _Level6ScreenState extends State<Level6Screen> {
   void _resetLevel() {
     setState(() {
       _routerPortByWire = [3, 0];
-      _leftSwitchStartPortByWire = [4, 1, 3];
-      _rightSwitchStartPortByWire = [4];
+      _switchStartPortByWire = [4, 1, 3, 5];
       _cpuLeftPortByWire = [0];
       _cpuRightPortByWire = [2];
       _routerEndLeftSwitchPort = [1];
       _routerEndRightSwitchPort = [1];
-      _interSwitchEndRightPort = [3, 5];
+      _interSwitchEndRightPort = [9, 11];
       _toRightCpuEndPort = [0];
       _toLeftCpuEndPort = [1];
       _draggingWire = null;
@@ -266,6 +272,7 @@ class _Level6ScreenState extends State<Level6Screen> {
                 _dialogButton(
                   text: 'Restart Level',
                   onPressed: () {
+                    unawaited(_playSfx('sfx_button.ogg'));
                     Navigator.of(dialogContext).pop();
                     _resetLevel();
                   },
@@ -274,6 +281,7 @@ class _Level6ScreenState extends State<Level6Screen> {
                 _dialogButton(
                   text: 'Back to home',
                   onPressed: () {
+                    unawaited(_playSfx('sfx_button.ogg'));
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
@@ -380,8 +388,22 @@ class _Level6ScreenState extends State<Level6Screen> {
                 ),
                 const SizedBox(height: 20),
                 _dialogButton(
+                  text: 'Next Level',
+                  onPressed: () {
+                    unawaited(_playSfx('sfx_button.ogg'));
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const Level7Screen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _dialogButton(
                   text: 'Back to home',
                   onPressed: () {
+                    unawaited(_playSfx('sfx_button.ogg'));
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
@@ -406,6 +428,7 @@ class _Level6ScreenState extends State<Level6Screen> {
     _levelCleared = true;
     _timer?.cancel();
     _showingClearDialog = true;
+    unawaited(_playSfx('sfx_complete.mp3'));
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
@@ -433,27 +456,22 @@ class _Level6ScreenState extends State<Level6Screen> {
       return;
     }
 
-    if (wireIndex < 5) {
+    if (wireIndex >= 2 && wireIndex <= 5) {
       final idx = wireIndex - 2;
-      if (_leftSwitchStartPortByWire[idx] == targetPort) {
+      if (_switchStartPortByWire[idx] == targetPort) {
         return;
       }
-      final other = _leftSwitchStartPortByWire.indexOf(targetPort);
+      final other = _switchStartPortByWire.indexOf(targetPort);
       setState(() {
         if (other != -1 && other != idx) {
-          final current = _leftSwitchStartPortByWire[idx];
-          _leftSwitchStartPortByWire[idx] = targetPort;
-          _leftSwitchStartPortByWire[other] = current;
+          final current = _switchStartPortByWire[idx];
+          _switchStartPortByWire[idx] = targetPort;
+          _switchStartPortByWire[other] = current;
         } else {
-          _leftSwitchStartPortByWire[idx] = targetPort;
+          _switchStartPortByWire[idx] = targetPort;
         }
       });
-      return;
-    }
-
-    if (wireIndex == 5) {
-      _rightSwitchStartPortByWire[0] = targetPort;
-      setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -463,6 +481,7 @@ class _Level6ScreenState extends State<Level6Screen> {
       }
       _cpuLeftPortByWire[0] = targetPort;
       setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
     }
   }
 
@@ -473,6 +492,7 @@ class _Level6ScreenState extends State<Level6Screen> {
       }
       _routerEndLeftSwitchPort[0] = targetPort;
       setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -482,6 +502,7 @@ class _Level6ScreenState extends State<Level6Screen> {
       }
       _routerEndRightSwitchPort[0] = targetPort;
       setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -500,6 +521,7 @@ class _Level6ScreenState extends State<Level6Screen> {
           _interSwitchEndRightPort[idx] = targetPort;
         }
       });
+      unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -509,6 +531,7 @@ class _Level6ScreenState extends State<Level6Screen> {
       }
       _toRightCpuEndPort[0] = targetPort;
       setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -518,6 +541,7 @@ class _Level6ScreenState extends State<Level6Screen> {
       }
       _toLeftCpuEndPort[0] = targetPort;
       setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -527,6 +551,7 @@ class _Level6ScreenState extends State<Level6Screen> {
       }
       _cpuRightPortByWire[0] = targetPort;
       setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
     }
   }
 
@@ -559,6 +584,7 @@ class _Level6ScreenState extends State<Level6Screen> {
     if (local == null) {
       return;
     }
+    unawaited(_playSfx('sfx_remove.wav'));
     setState(() {
       _draggingWire = wireIndex;
       _draggingWireEnd = dragEnd;
@@ -636,7 +662,10 @@ class _Level6ScreenState extends State<Level6Screen> {
             width: _buttonSize,
             height: _buttonSize,
             child: OutlinedButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                unawaited(_playSfx('sfx_button.ogg'));
+                Navigator.of(context).pop();
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor: _outlineColor,
                 side: const BorderSide(color: _outlineColor, width: 2),
@@ -665,7 +694,10 @@ class _Level6ScreenState extends State<Level6Screen> {
               width: _buttonSize,
               height: _buttonSize,
               child: OutlinedButton(
-                onPressed: () => _showPauseDialog(0),
+                onPressed: () {
+                  unawaited(_playSfx('sfx_button.ogg'));
+                  _showPauseDialog(0);
+                },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _outlineColor,
                   side: const BorderSide(color: _outlineColor, width: 2),
@@ -750,18 +782,16 @@ class _Level6ScreenState extends State<Level6Screen> {
             final starts = <Offset>[
               routerPorts[_routerPortByWire[0]],
               routerPorts[_routerPortByWire[1]],
-              leftSwitchPorts[_leftSwitchStartPortByWire[0]],
-              leftSwitchPorts[_leftSwitchStartPortByWire[1]],
-              leftSwitchPorts[_leftSwitchStartPortByWire[2]],
-              rightSwitchPorts[_rightSwitchStartPortByWire[0]],
+              ..._switchStartPortByWire
+                  .map((portIndex) => switchPorts[portIndex]),
               leftCpuPorts[_cpuLeftPortByWire[0]],
             ];
 
             final ends = <Offset>[
               leftSwitchPorts[_routerEndLeftSwitchPort[0]],
               rightSwitchPorts[_routerEndRightSwitchPort[0]],
-              rightSwitchPorts[_interSwitchEndRightPort[0]],
-              rightSwitchPorts[_interSwitchEndRightPort[1]],
+              switchPorts[_interSwitchEndRightPort[0]],
+              switchPorts[_interSwitchEndRightPort[1]],
               rightCpuPorts[_toRightCpuEndPort[0]],
               leftCpuPorts[_toLeftCpuEndPort[0]],
               rightCpuPorts[_cpuRightPortByWire[0]],
@@ -950,23 +980,15 @@ class _Level6ScreenState extends State<Level6Screen> {
                     onPanEnd: (_) => _onWireDragEnd(wire, routerPorts),
                     onPanCancel: () => _onWireDragEnd(wire, routerPorts),
                   ),
-                for (var wire = 2; wire < 5; wire++)
+                for (var wire = 2; wire < 6; wire++)
                   _dragHandle(
                     position: starts[wire],
                     color: _wireColors[wire],
                     onPanStart: (details) => _onWireDragStart(wire, details),
                     onPanUpdate: (details) => _onWireDragUpdate(wire, details),
-                    onPanEnd: (_) => _onWireDragEnd(wire, leftSwitchPorts),
-                    onPanCancel: () => _onWireDragEnd(wire, leftSwitchPorts),
+                    onPanEnd: (_) => _onWireDragEnd(wire, switchPorts),
+                    onPanCancel: () => _onWireDragEnd(wire, switchPorts),
                   ),
-                _dragHandle(
-                  position: starts[5],
-                  color: _wireColors[5],
-                  onPanStart: (details) => _onWireDragStart(5, details),
-                  onPanUpdate: (details) => _onWireDragUpdate(5, details),
-                  onPanEnd: (_) => _onWireDragEnd(5, rightSwitchPorts),
-                  onPanCancel: () => _onWireDragEnd(5, rightSwitchPorts),
-                ),
 
                 // Draggable CPU endpoints
                 _dragHandle(
