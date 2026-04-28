@@ -65,6 +65,7 @@ class _Level7ScreenState extends State<Level7Screen> {
   bool _showPrePlayModule = true;
   bool _levelCleared = false;
   bool _showingClearDialog = false;
+  bool _hasInteracted = false;
 
   @override
   void initState() {
@@ -162,6 +163,7 @@ class _Level7ScreenState extends State<Level7Screen> {
       _isPaused = false;
       _levelCleared = false;
       _showingClearDialog = false;
+      _hasInteracted = false;
     });
     _startTimer();
   }
@@ -429,6 +431,7 @@ class _Level7ScreenState extends State<Level7Screen> {
     final allWiresPlugged = _draggingWire == null && _dragPosition == null;
     if (_levelCleared ||
         _showingClearDialog ||
+        !_hasInteracted ||
         crossingCount != 0 ||
         !allWiresPlugged) {
       return;
@@ -463,6 +466,7 @@ class _Level7ScreenState extends State<Level7Screen> {
       _draggingWire = wireIndex;
       _draggingWireEnd = dragEnd;
       _dragPosition = local;
+      _hasInteracted = true;
     });
   }
 

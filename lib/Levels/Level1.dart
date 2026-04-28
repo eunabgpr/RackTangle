@@ -379,7 +379,7 @@ class _Level1ScreenState extends State<Level1Screen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: const Text(
-                        'Next Level >',
+                        'Next Level',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
