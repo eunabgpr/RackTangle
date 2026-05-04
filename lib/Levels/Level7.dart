@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:racktangle/Levels/Level8.dart';
 
@@ -18,68 +20,62 @@ class _Level7ScreenState extends State<Level7Screen> {
   static const double _buttonRadius = 10;
   static const double _buttonOuterPadding = 10;
 
-  static const double _boardWidth = 760;
-  static const double _boardHeight = 1160;
+  static const double _serverLeftPortX = 0.25;
+  static const double _serverRightPortX = 0.38;
+  static const double _leftPortsYOffsetPx = -30;
+  static const List<double> _serverPortY = [
+    0.37,
+    0.47,
+    0.57,
+    0.67,
+    0.77,
+    0.84,
+  ];
 
   static const List<Color> _wireColors = [
-    Color(0xFF64C8FF),
     Color(0xFF39FF4A),
     Colors.redAccent,
+    Colors.orangeAccent,
     Colors.blueAccent,
     Color(0xFFB24DFF),
-    Color(0xFFFF1ED2),
-    Colors.orangeAccent,
   ];
 
-  static const List<double> _leftPortY = [
-    0.24,
-    0.32,
-    0.40,
-    0.48,
-    0.56,
-    0.64,
-    0.72,
-  ];
-  static const List<double> _rightPortY = [
-    0.22,
-    0.30,
-    0.38,
-    0.46,
-    0.54,
-    0.62,
-    0.70,
-  ];
+  final GlobalKey _stackKey = GlobalKey();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
 
-  final GlobalKey _boardKey = GlobalKey();
-
-  final List<int> _startPortByWire = [0, 1, 2, 3, 4, 5, 6];
-  final List<int> _endPortByWire = [6, 4, 5, 3, 1, 2, 0];
+  // Five cables: left-side endpoint is draggable among left ports,
+  // right-side endpoint is draggable among right ports.
+  List<int> _leftPortByWire = [0, 1, 2, 3, 4];
+  List<int> _rightPortByWire = [3, 1, 0, 4, 2]; // 5 crossings initial
 
   int? _draggingWire;
+  bool _draggingWireEnd = false;
   Offset? _dragPosition;
+
   int _elapsedSeconds = 0;
   Timer? _timer;
-  bool _isPaused = false;
-  bool _showPrePlayModule = true;
   bool _levelCleared = false;
   bool _showingClearDialog = false;
-  bool _hasInteracted = false;
+  bool _isPaused = false;
+  bool _showPrePlayModule = true;
+  int _currentCrossingCount = 0;
 
   @override
   void initState() {
     super.initState();
     _isPaused = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _showLearningModulePopup();
-      }
-    });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _sfxPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playSfx(String fileName) async {
+    await _sfxPlayer.stop();
+    await _sfxPlayer.play(AssetSource('sfx/$fileName'));
   }
 
   void _startTimer() {
@@ -88,7 +84,7 @@ class _Level7ScreenState extends State<Level7Screen> {
     }
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted || _isPaused) {
+      if (!mounted || _levelCleared || _isPaused) {
         timer.cancel();
         return;
       }
@@ -98,20 +94,22 @@ class _Level7ScreenState extends State<Level7Screen> {
     });
   }
 
+  String _formatTime(int totalSeconds) {
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
   void _pauseTimer() {
     _timer?.cancel();
     _isPaused = true;
-  }
-
-  void _resumeTimer() {
-    _isPaused = false;
-    _startTimer();
   }
 
   void _startLevelFromLearningCard() {
     if (!_showPrePlayModule) {
       return;
     }
+    unawaited(_playSfx('sfx_button.ogg'));
     setState(() {
       _showPrePlayModule = false;
       _isPaused = false;
@@ -119,62 +117,36 @@ class _Level7ScreenState extends State<Level7Screen> {
     _startTimer();
   }
 
-  Future<void> _showLearningModulePopup() async {
-    if (!_showPrePlayModule || !mounted) {
+  void _resumeTimer() {
+    if (_levelCleared) {
       return;
     }
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black38,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: SingleChildScrollView(
-            child: _Level7LearningCard(
-              onReady: () {
-                Navigator.of(dialogContext).pop();
-                _startLevelFromLearningCard();
-              },
-            ),
-          ),
-        );
-      },
-    );
+    _isPaused = false;
+    _startTimer();
   }
 
   void _resetLevel() {
     setState(() {
-      _startPortByWire
-        ..clear()
-        ..addAll([0, 1, 2, 3, 4, 5, 6]);
-      _endPortByWire
-        ..clear()
-        ..addAll([6, 4, 5, 3, 1, 2, 0]);
+      _leftPortByWire = [0, 1, 2, 3, 4];
+      _rightPortByWire = [3, 1, 0, 4, 2];
       _draggingWire = null;
+      _draggingWireEnd = false;
       _dragPosition = null;
       _elapsedSeconds = 0;
       _isPaused = false;
       _levelCleared = false;
       _showingClearDialog = false;
-      _hasInteracted = false;
     });
     _startTimer();
   }
 
-  String _formatTime(int totalSeconds) {
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
   Future<void> _showPauseDialog(int crossingCount) async {
+    if (_showingClearDialog) {
+      return;
+    }
     _pauseTimer();
-    var shouldResume = false;
 
+    var shouldResume = false;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -238,28 +210,82 @@ class _Level7ScreenState extends State<Level7Screen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _dialogButton(
-                  text: 'Resume',
-                  onPressed: () {
-                    shouldResume = true;
-                    Navigator.of(dialogContext).pop();
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      unawaited(_playSfx('sfx_button.ogg'));
+                      shouldResume = true;
+                      Navigator.of(dialogContext).pop();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF7E84A4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Resume',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                _dialogButton(
-                  text: 'Restart Level',
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    _resetLevel();
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      unawaited(_playSfx('sfx_button.ogg'));
+                      Navigator.of(dialogContext).pop();
+                      _resetLevel();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF7E84A4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Restart Level',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                _dialogButton(
-                  text: 'Back to home',
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      unawaited(_playSfx('sfx_button.ogg'));
+                      Navigator.of(dialogContext).pop();
+                      Navigator.of(context).pop();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF7E84A4)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Exit Level',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -267,13 +293,40 @@ class _Level7ScreenState extends State<Level7Screen> {
         );
       },
     );
-
     if (shouldResume && mounted) {
       _resumeTimer();
     }
   }
 
+  Widget _dialogButton(
+      {required String text, required VoidCallback onPressed}) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFF7E84A4)),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showCompletionDialog() async {
+    if (!mounted) {
+      return;
+    }
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -294,11 +347,11 @@ class _Level7ScreenState extends State<Level7Screen> {
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF1D5C3B),
+                    color: const Color(0xFF1D2455),
                     border: Border.all(color: Colors.greenAccent, width: 1.4),
                   ),
                   child: const Icon(Icons.check,
-                      color: Colors.greenAccent, size: 54),
+                      color: Colors.greenAccent, size: 48),
                 ),
                 const SizedBox(height: 14),
                 const Text(
@@ -330,65 +383,33 @@ class _Level7ScreenState extends State<Level7Screen> {
                     const SizedBox(width: 12),
                     const Expanded(
                       child: _StatCard(
-                        value: '7',
+                        value: '5',
                         label: 'Cables',
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(dialogContext).pop();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const Level8Screen(),
-                        ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF7E84A4)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                _dialogButton(
+                  text: 'Next Level',
+                  onPressed: () {
+                    unawaited(_playSfx('sfx_button.ogg'));
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const Level8Screen(),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text(
-                      'Next Level',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(dialogContext).pop();
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF7E84A4)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text(
-                      'Back to home',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                _dialogButton(
+                  text: 'Back to home',
+                  onPressed: () {
+                    unawaited(_playSfx('sfx_button.ogg'));
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
                 ),
               ],
             ),
@@ -399,43 +420,18 @@ class _Level7ScreenState extends State<Level7Screen> {
     _showingClearDialog = false;
   }
 
-  Widget _dialogButton(
-      {required String text, required VoidCallback onPressed}) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFF7E84A4)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-
   void _checkAndHandleLevelClear(int crossingCount) {
     final allWiresPlugged = _draggingWire == null && _dragPosition == null;
     if (_levelCleared ||
         _showingClearDialog ||
-        !_hasInteracted ||
         crossingCount != 0 ||
         !allWiresPlugged) {
       return;
     }
     _levelCleared = true;
+    _timer?.cancel();
     _showingClearDialog = true;
-    _pauseTimer();
+    unawaited(_playSfx('sfx_complete.mp3'));
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
@@ -445,34 +441,35 @@ class _Level7ScreenState extends State<Level7Screen> {
     });
   }
 
-  Offset? _toBoardLocal(Offset globalPosition) {
-    final renderObject = _boardKey.currentContext?.findRenderObject();
-    if (renderObject is! RenderBox) {
-      return null;
-    }
-    return renderObject.globalToLocal(globalPosition);
-  }
-
-  void _onWireDragStart(int wireIndex, DragStartDetails details,
-      {bool dragEnd = false}) {
-    final local = _toBoardLocal(details.globalPosition);
-    if (local == null) {
+  void _moveWireToPort(int wireIndex, int targetPort) {
+    if (_leftPortByWire[wireIndex] == targetPort) {
       return;
     }
+    final otherWire = _leftPortByWire.indexOf(targetPort);
     setState(() {
-      _draggingWire = wireIndex;
-      _dragPosition = local;
-      _hasInteracted = true;
+      if (otherWire != -1 && otherWire != wireIndex) {
+        final current = _leftPortByWire[wireIndex];
+        _leftPortByWire[wireIndex] = targetPort;
+        _leftPortByWire[otherWire] = current;
+      } else {
+        _leftPortByWire[wireIndex] = targetPort;
+      }
     });
   }
 
-  void _onWireDragUpdate(int wireIndex, DragUpdateDetails details) {
-    final local = _toBoardLocal(details.globalPosition);
-    if (local == null || _draggingWire != wireIndex) {
+  void _moveWireEndToPort(int wireIndex, int targetPort) {
+    if (_rightPortByWire[wireIndex] == targetPort) {
       return;
     }
+    final otherWire = _rightPortByWire.indexOf(targetPort);
     setState(() {
-      _dragPosition = local;
+      if (otherWire != -1 && otherWire != wireIndex) {
+        final current = _rightPortByWire[wireIndex];
+        _rightPortByWire[wireIndex] = targetPort;
+        _rightPortByWire[otherWire] = current;
+      } else {
+        _rightPortByWire[wireIndex] = targetPort;
+      }
     });
   }
 
@@ -482,57 +479,66 @@ class _Level7ScreenState extends State<Level7Screen> {
     for (var i = 0; i < ports.length; i++) {
       final dx = ports[i].dx - point.dx;
       final dy = ports[i].dy - point.dy;
-      final distance = (dx * dx) + (dy * dy);
-      if (distance < best) {
-        best = distance;
+      final d = (dx * dx) + (dy * dy);
+      if (d < best) {
+        best = d;
         index = i;
       }
     }
     return index;
   }
 
-  void _moveWireToPort(int wireIndex, int targetPort, bool dragEnd) {
-    if (dragEnd) {
-      final current = _endPortByWire[wireIndex];
-      final other = _endPortByWire.indexOf(targetPort);
-      if (current == targetPort) {
-        return;
-      }
-      setState(() {
-        if (other != -1 && other != wireIndex) {
-          _endPortByWire[wireIndex] = targetPort;
-          _endPortByWire[other] = current;
-        } else {
-          _endPortByWire[wireIndex] = targetPort;
-        }
-      });
+  Offset? _toStackLocal(Offset globalPosition) {
+    final renderObject = _stackKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderBox) {
+      return null;
+    }
+    return renderObject.globalToLocal(globalPosition);
+  }
+
+  void _onWireDragStart(int wireIndex, DragStartDetails details,
+      {bool dragEnd = false}) {
+    final local = _toStackLocal(details.globalPosition);
+    if (local == null) {
       return;
     }
+    unawaited(_playSfx('sfx_remove.wav'));
+    setState(() {
+      _draggingWire = wireIndex;
+      _draggingWireEnd = dragEnd;
+      _dragPosition = local;
+    });
+  }
 
-    final current = _startPortByWire[wireIndex];
-    final other = _startPortByWire.indexOf(targetPort);
-    if (current == targetPort) {
+  void _onWireDragUpdate(int wireIndex, DragUpdateDetails details) {
+    final local = _toStackLocal(details.globalPosition);
+    if (local == null || _draggingWire != wireIndex) {
       return;
     }
     setState(() {
-      if (other != -1 && other != wireIndex) {
-        _startPortByWire[wireIndex] = targetPort;
-        _startPortByWire[other] = current;
-      } else {
-        _startPortByWire[wireIndex] = targetPort;
-      }
+      _dragPosition = local;
     });
   }
 
   void _onWireDragEnd(int wireIndex, List<Offset> ports,
       {bool dragEnd = false}) {
     final drop = _dragPosition;
+    final previousPort =
+        dragEnd ? _rightPortByWire[wireIndex] : _leftPortByWire[wireIndex];
     if (drop != null) {
       final targetPort = _nearestPortIndex(drop, ports);
-      _moveWireToPort(wireIndex, targetPort, dragEnd);
+      if (dragEnd) {
+        _moveWireEndToPort(wireIndex, targetPort);
+      } else {
+        _moveWireToPort(wireIndex, targetPort);
+      }
+      if (targetPort != previousPort) {
+        unawaited(_playSfx('sfx_attach.wav'));
+      }
     }
     setState(() {
       _draggingWire = null;
+      _draggingWireEnd = false;
       _dragPosition = null;
     });
   }
@@ -571,193 +577,246 @@ class _Level7ScreenState extends State<Level7Screen> {
       appBar: AppBar(
         backgroundColor: _backgroundColor,
         foregroundColor: Colors.white,
-        elevation: 0,
+        centerTitle: true,
+        leadingWidth: _buttonSize + (_buttonOuterPadding * 2),
         leading: Padding(
           padding: const EdgeInsets.all(_buttonOuterPadding),
-          child: _iconButton(
-            icon: Icons.arrow_back_ios_new_rounded,
-            onTap: () => Navigator.of(context).pop(),
+          child: SizedBox(
+            width: _buttonSize,
+            height: _buttonSize,
+            child: OutlinedButton(
+              onPressed: () {
+                unawaited(_playSfx('sfx_button.ogg'));
+                Navigator.of(context).pop();
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _outlineColor,
+                side: const BorderSide(color: _outlineColor, width: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(_buttonRadius),
+                ),
+                padding: EdgeInsets.zero,
+              ),
+              child: const Icon(Icons.chevron_left, size: 22),
+            ),
+          ),
+        ),
+        title: const Text(
+          'Level 7',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 44,
+            letterSpacing: -0.5,
           ),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.all(_buttonOuterPadding),
-            child: _iconButton(
-              icon: _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-              onTap: () {
-                if (_isPaused) {
-                  _resumeTimer();
-                } else {
-                  _showPauseDialog(_crossingsFromLines(
-                    _wireStartPositions,
-                    _wireEndPositions,
-                  ));
-                }
-              },
+            child: SizedBox(
+              width: _buttonSize,
+              height: _buttonSize,
+              child: OutlinedButton(
+                onPressed: () {
+                  unawaited(_playSfx('sfx_button.ogg'));
+                  _showPauseDialog(_currentCrossingCount);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _outlineColor,
+                  side: const BorderSide(color: _outlineColor, width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_buttonRadius),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                child: const Icon(Icons.pause, size: 22),
+              ),
             ),
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            children: [
-              Column(
-                children: [
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Level 7 Draft',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final height = constraints.maxHeight;
+
+            final serverWidth = math.min(width * 0.95, 800.0);
+            final availableForServer = math.max(220.0, height - 100.0);
+            final serverHeight =
+                math.min(serverWidth * 1.30, availableForServer);
+            final serverLeft = (width - serverWidth) / 2;
+            final serverTop = 118.0;
+
+            final leftPorts = List<Offset>.generate(
+              _serverPortY.length,
+              (i) => Offset(
+                serverLeft + (serverWidth * _serverLeftPortX),
+                serverTop +
+                    (serverHeight * _serverPortY[i]) +
+                    _leftPortsYOffsetPx,
+              ),
+            );
+
+            final rightPorts = List<Offset>.generate(
+              _serverPortY.length,
+              (i) => Offset(
+                serverLeft + (serverWidth * _serverRightPortX),
+                serverTop + (serverHeight * _serverPortY[i]),
+              ),
+            );
+
+            final starts = List<Offset>.generate(
+              _wireColors.length,
+              (i) => leftPorts[_leftPortByWire[i]],
+            );
+            final ends = List<Offset>.generate(
+              _wireColors.length,
+              (i) => rightPorts[_rightPortByWire[i]],
+            );
+
+            if (_draggingWire != null && _dragPosition != null) {
+              if (_draggingWireEnd) {
+                ends[_draggingWire!] = _dragPosition!;
+              } else {
+                starts[_draggingWire!] = _dragPosition!;
+              }
+            }
+
+            final crossingCount = _crossingsFromLines(starts, ends);
+            _currentCrossingCount = crossingCount;
+            _checkAndHandleLevelClear(crossingCount);
+
+            return Stack(
+              key: _stackKey,
+              children: [
+                Positioned(
+                  top: 10,
+                  left: 25,
+                  right: 16,
+                  child: Column(
+                    children: [
+                      Stack(
+                        children: [
+                          Center(
+                            child: Text(
+                              '• $crossingCount Crossings',
+                              style: TextStyle(
+                                color: crossingCount > 0
+                                    ? Colors.redAccent
+                                    : Colors.greenAccent,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '- ${_crossingsFromLines(_wireStartPositions, _wireEndPositions)} Crossings',
-                          style: const TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              _formatTime(_elapsedSeconds),
+                              style: const TextStyle(
+                                color: Color(0xFFD0D0D0),
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Draft layout preview without pinch zoom',
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      const SizedBox(
+                        width: 260,
+                        child: Text(
+                          'Drag cable endpoints to untangle all connection',
+                          maxLines: 2,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.55),
+                            color: Color(0xFFD0D0D0),
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: serverTop,
+                  left: serverLeft,
+                  child: SizedBox(
+                    width: serverWidth,
+                    height: serverHeight,
+                    child: Image.asset(
+                      'assets/images/server.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.contain,
-                        child: SizedBox(
-                          width: _boardWidth,
-                          height: _boardHeight,
-                          child: _buildBoard(),
+                ),
+                Positioned(
+                  top: serverTop + serverHeight + 12,
+                  left: (width / 2) - 34,
+                  child: const _UnitLabel(text: 'Server'),
+                ),
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _WirePainter(
+                      starts: starts,
+                      ends: ends,
+                      colors: _wireColors,
+                    ),
+                  ),
+                ),
+                for (var i = 0; i < leftPorts.length; i++)
+                  _ghostPort(leftPorts[i]),
+                for (var i = 0; i < rightPorts.length; i++)
+                  _ghostPort(rightPorts[i]),
+                for (var wire = 0; wire < _wireColors.length; wire++)
+                  _dragHandle(
+                    position: starts[wire],
+                    color: _wireColors[wire],
+                    onPanStart: (details) => _onWireDragStart(wire, details),
+                    onPanUpdate: (details) => _onWireDragUpdate(wire, details),
+                    onPanEnd: (_) => _onWireDragEnd(wire, leftPorts),
+                    onPanCancel: () => _onWireDragEnd(wire, leftPorts),
+                  ),
+                for (var wire = 0; wire < _wireColors.length; wire++)
+                  _dragHandle(
+                    position: ends[wire],
+                    color: _wireColors[wire],
+                    onPanStart: (details) =>
+                        _onWireDragStart(wire, details, dragEnd: true),
+                    onPanUpdate: (details) => _onWireDragUpdate(wire, details),
+                    onPanEnd: (_) =>
+                        _onWireDragEnd(wire, rightPorts, dragEnd: true),
+                    onPanCancel: () =>
+                        _onWireDragEnd(wire, rightPorts, dragEnd: true),
+                  ),
+                if (_showPrePlayModule)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black38,
+                      alignment: Alignment.center,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 24),
+                        child: _Level7LearningCard(
+                          onReady: _startLevelFromLearningCard,
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  List<Offset> get _wireStartPositions {
-    final ports = _buildPorts();
-    return [
-      for (final portIndex in _startPortByWire) ports[portIndex],
-    ];
-  }
-
-  List<Offset> get _wireEndPositions {
-    final ports = _buildPorts();
-    return [
-      for (final portIndex in _endPortByWire) ports[portIndex],
-    ];
-  }
-
-  List<Offset> _buildPorts() {
-    final ports = <Offset>[];
-    const leftX = _boardWidth * 0.18;
-    const rightX = _boardWidth * 0.82;
-    for (var i = 0; i < _leftPortY.length; i++) {
-      ports.add(Offset(leftX, _boardHeight * _leftPortY[i]));
-    }
-    for (var i = 0; i < _rightPortY.length; i++) {
-      ports.add(Offset(rightX, _boardHeight * _rightPortY[i]));
-    }
-    return ports;
-  }
-
-  Widget _buildBoard() {
-    final ports = _buildPorts();
-    final starts = _wireStartPositions;
-    final ends = _wireEndPositions;
-    final crossingCount = _crossingsFromLines(starts, ends);
-
-    _checkAndHandleLevelClear(crossingCount);
-
-    return Stack(
-      key: _boardKey,
-      children: [
-        Positioned(
-          top: 130,
-          left: 132,
-          child: Image.asset(
-            'assets/images/server.png',
-            width: 520,
-            fit: BoxFit.contain,
-          ),
-        ),
-        const Positioned(
-          top: 114,
-          left: 318,
-          child: _UnitLabel(text: 'Server'),
-        ),
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _WirePainter(
-              starts: starts,
-              ends: ends,
-              colors: _wireColors,
-            ),
-          ),
-        ),
-        for (var i = 0; i < ports.length; i++) _ghostPort(ports[i]),
-        for (var wire = 0; wire < starts.length; wire++)
-          _dragHandle(
-            position: starts[wire],
-            color: _wireColors[wire],
-            onPanStart: (details) => _onWireDragStart(wire, details),
-            onPanUpdate: (details) => _onWireDragUpdate(wire, details),
-            onPanEnd: (_) => _onWireDragEnd(wire, ports),
-            onPanCancel: () => _onWireDragEnd(wire, ports),
-          ),
-        for (var wire = 0; wire < ends.length; wire++)
-          _dragHandle(
-            position: ends[wire],
-            color: _wireColors[wire],
-            onPanStart: (details) =>
-                _onWireDragStart(wire, details, dragEnd: true),
-            onPanUpdate: (details) => _onWireDragUpdate(wire, details),
-            onPanEnd: (_) => _onWireDragEnd(wire, ports, dragEnd: true),
-            onPanCancel: () => _onWireDragEnd(wire, ports, dragEnd: true),
-          ),
-        Positioned(
-          top: 22,
-          left: 24,
-          child: _StatCard(
-            value: _formatTime(_elapsedSeconds),
-            label: 'Time',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _ghostPort(Offset position) {
+  Widget _ghostPort(Offset p) {
     return Positioned(
-      left: position.dx - 8,
-      top: position.dy - 8,
+      left: p.dx - 8,
+      top: p.dy - 8,
       child: Container(
         width: 16,
         height: 16,
@@ -782,7 +841,6 @@ class _Level7ScreenState extends State<Level7Screen> {
       left: position.dx - 11,
       top: position.dy - 11,
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
         onPanStart: onPanStart,
         onPanUpdate: onPanUpdate,
         onPanEnd: onPanEnd,
@@ -796,22 +854,6 @@ class _Level7ScreenState extends State<Level7Screen> {
             border: Border.all(color: Colors.black54, width: 2),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _iconButton({required IconData icon, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(_buttonRadius),
-      child: Container(
-        width: _buttonSize,
-        height: _buttonSize,
-        decoration: BoxDecoration(
-          border: Border.all(color: _outlineColor, width: 1.4),
-          borderRadius: BorderRadius.circular(_buttonRadius),
-        ),
-        child: Icon(icon, color: Colors.white, size: 24),
       ),
     );
   }
@@ -898,7 +940,7 @@ class _WirePainter extends CustomPainter {
     for (var i = 0; i < starts.length; i++) {
       final paint = Paint()
         ..color = colors[i]
-        ..strokeWidth = 7
+        ..strokeWidth = 5
         ..strokeCap = StrokeCap.round
         ..style = PaintingStyle.stroke;
       canvas.drawLine(starts[i], ends[i], paint);
@@ -922,7 +964,7 @@ class _Level7LearningCard extends StatelessWidget {
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 420),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E38),
+        color: const Color(0xFF1D2040),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFF2D3360), width: 1.4),
       ),
@@ -930,9 +972,9 @@ class _Level7LearningCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: const BoxDecoration(
-              color: Color(0xFFEA775A),
+              color: Color(0xFFE27255),
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: const Column(
@@ -960,8 +1002,8 @@ class _Level7LearningCard extends StatelessWidget {
                 Text(
                   'Level 7 - Redundancy',
                   style: TextStyle(
-                    color: Color(0xFFFFE0D7),
-                    fontSize: 16,
+                    color: Color(0xFFFFF4F1),
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -969,117 +1011,110 @@ class _Level7LearningCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Expanded(
-                      child: _pill(
-                        'Levels 1-3',
-                        const Color(0xFF23284A),
-                        false,
-                      ),
+                      child:
+                          _pill('Levels 1-3', const Color(0xFF1C2144), false),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _pill(
-                        'Levels 7-9',
-                        const Color(0xFF1D2C58),
-                        true,
-                      ),
+                      child: _pill('Levels 7-9', const Color(0xFF1A2D5A), true),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                const _SectionLabel(text: '• Level 8 - New Device'),
+                const SizedBox(height: 14),
+                const Text(
+                  'Level 7 - New Device',
+                  style: TextStyle(
+                    color: Color(0xFFE27255),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF232545),
+                    color: const Color(0xFF21264A),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF31365E)),
+                    border: Border.all(color: const Color(0xFF323767)),
                   ),
                   child: const Column(
                     children: [
-                      Icon(Icons.dns_rounded,
-                          color: Color(0xFFEA775A), size: 34),
+                      ImageIcon(
+                        AssetImage('assets/images/server.png'),
+                        size: 34,
+                        color: Color(0xFFE27255),
+                      ),
                       SizedBox(height: 8),
                       Text(
                         'SERVER RACK',
                         style: TextStyle(
-                          color: Color(0xFFEA775A),
+                          color: Color(0xFFE27255),
                           fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          letterSpacing: 0.6,
+                          fontSize: 16,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 14),
+                _pill('The "Service Provider"', const Color(0xFF1E2E58), true),
                 const SizedBox(height: 12),
-                const _Tag(text: 'The "Service Provider"'),
-                const SizedBox(height: 10),
                 const Text(
-                  'A Server is a powerful computer dedicated to providing data or services to other "client" computers. Unlike a PC, servers have specialized hardware to handle thousands of simultaneous connections. They\'re usually mounted in Racks requiring complex cooling and cabling.',
+                  'A Server is a powerful computer dedicated to providing data or services to other "client" computers. '
+                  'Unlike a PC, servers have specialized hardware to handle many connections at once. '
+                  'They are usually mounted in racks, where cabling and redundancy help keep services online.',
                   style: TextStyle(
-                    color: Color(0xFFBFC9F1),
-                    fontSize: 12.5,
-                    height: 1.45,
+                    color: Color(0xFFC8D5FF),
+                    fontSize: 12,
+                    height: 1.4,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2A2740),
+                    color: const Color(0xFF302D3D),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF5B4F6D)),
+                    border: Border.all(color: const Color(0xFF584E70)),
                   ),
-                  child: const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.ac_unit, color: Color(0xFF59C6FF), size: 18),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'FUN FACT\nGoogle\'s data centers have millions of servers, kept in cold rooms because they generate enough heat to warm an entire building!',
-                          style: TextStyle(
-                            color: Color(0xFFC8D5FF),
-                            fontSize: 12,
-                            height: 1.35,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: const Text(
+                    'FUN FACT\nSome data centers contain millions of servers, kept cool because they generate enough heat to warm a building.',
+                    style: TextStyle(
+                      color: Color(0xFFC5B7DF),
+                      fontSize: 12,
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: onReady,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEA775A),
+                      backgroundColor: const Color(0xFFE27255),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     child: const Text(
                       '→ Ready to Play!',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -1108,49 +1143,6 @@ class _Level7LearningCard extends StatelessWidget {
           color: active ? const Color(0xFFE4EEFF) : const Color(0xFFA5ADCF),
           fontWeight: FontWeight.w700,
           fontSize: 14,
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: Color(0xFFEA775A),
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-      ),
-    );
-  }
-}
-
-class _Tag extends StatelessWidget {
-  const _Tag({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFEA775A), width: 1.1),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Color(0xFFEA775A),
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );
