@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:racktangle/Levels/Level8.dart';
@@ -57,7 +56,6 @@ class _Level7ScreenState extends State<Level7Screen> {
   final List<int> _endPortByWire = [6, 4, 5, 3, 1, 2, 0];
 
   int? _draggingWire;
-  bool _draggingWireEnd = false;
   Offset? _dragPosition;
   int _elapsedSeconds = 0;
   Timer? _timer;
@@ -157,7 +155,6 @@ class _Level7ScreenState extends State<Level7Screen> {
         ..clear()
         ..addAll([6, 4, 5, 3, 1, 2, 0]);
       _draggingWire = null;
-      _draggingWireEnd = false;
       _dragPosition = null;
       _elapsedSeconds = 0;
       _isPaused = false;
@@ -464,7 +461,6 @@ class _Level7ScreenState extends State<Level7Screen> {
     }
     setState(() {
       _draggingWire = wireIndex;
-      _draggingWireEnd = dragEnd;
       _dragPosition = local;
       _hasInteracted = true;
     });
@@ -537,7 +533,6 @@ class _Level7ScreenState extends State<Level7Screen> {
     }
     setState(() {
       _draggingWire = null;
-      _draggingWireEnd = false;
       _dragPosition = null;
     });
   }
@@ -605,8 +600,6 @@ class _Level7ScreenState extends State<Level7Screen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final boardScale =
-              math.max(0.90, (constraints.maxWidth / 760) * 0.94);
           return Stack(
             children: [
               Column(
@@ -617,7 +610,7 @@ class _Level7ScreenState extends State<Level7Screen> {
                     child: Column(
                       children: [
                         const Text(
-                          'Level 7',
+                          'Level 7 Draft',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 36,
@@ -635,7 +628,7 @@ class _Level7ScreenState extends State<Level7Screen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Pinch to zoom and drag the wires',
+                          'Draft layout preview without pinch zoom',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.55),
@@ -649,18 +642,12 @@ class _Level7ScreenState extends State<Level7Screen> {
                   const SizedBox(height: 8),
                   Expanded(
                     child: Center(
-                      child: InteractiveViewer(
-                        minScale: 0.70,
-                        maxScale: 2.80,
-                        boundaryMargin: const EdgeInsets.all(220),
-                        clipBehavior: Clip.none,
-                        child: Transform.scale(
-                          scale: boardScale,
-                          child: SizedBox(
-                            width: _boardWidth,
-                            height: _boardHeight,
-                            child: _buildBoard(),
-                          ),
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SizedBox(
+                          width: _boardWidth,
+                          height: _boardHeight,
+                          child: _buildBoard(),
                         ),
                       ),
                     ),
@@ -714,17 +701,17 @@ class _Level7ScreenState extends State<Level7Screen> {
       children: [
         Positioned(
           top: 130,
-          left: 160,
+          left: 132,
           child: Image.asset(
             'assets/images/server.png',
-            width: 440,
+            width: 520,
             fit: BoxFit.contain,
           ),
         ),
-        Positioned(
+        const Positioned(
           top: 114,
           left: 318,
-          child: const _UnitLabel(text: 'Server'),
+          child: _UnitLabel(text: 'Server'),
         ),
         Positioned.fill(
           child: CustomPaint(
@@ -911,7 +898,7 @@ class _WirePainter extends CustomPainter {
     for (var i = 0; i < starts.length; i++) {
       final paint = Paint()
         ..color = colors[i]
-        ..strokeWidth = 5
+        ..strokeWidth = 7
         ..strokeCap = StrokeCap.round
         ..style = PaintingStyle.stroke;
       canvas.drawLine(starts[i], ends[i], paint);
