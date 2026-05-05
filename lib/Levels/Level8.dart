@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:racktangle/Levels/Level8.dart';
+import 'package:racktangle/Levels/Level9.dart';
 
 class Level8Screen extends StatefulWidget {
   const Level8Screen({super.key});
@@ -20,48 +20,44 @@ class _Level8ScreenState extends State<Level8Screen> {
   static const double _buttonRadius = 10;
   static const double _buttonOuterPadding = 10;
 
-  static const List<double> _routerPortX = [0.34, 0.46, 0.58, 0.70];
-  static const double _routerPortY = 0.70;
+  static const List<double> _switchPortX = [
+    0.16,
+    0.50,
+    0.84,
+    0.16,
+    0.50,
+    0.84,
+  ];
+
+  static const List<double> _switchPortY = [0.40, 0.40, 0.40, 0.60, 0.60, 0.60];
 
   static const List<double> _leftSwitchPortX = [
     0.22,
-    0.40,
-    0.58,
-    0.22,
-    0.40,
-    0.58
+    0.50,
+    0.78,
   ];
   static const List<double> _leftSwitchPortY = [
-    0.42,
-    0.42,
-    0.42,
-    0.62,
-    0.62,
-    0.62
+    0.67,
+    0.67,
+    0.67,
   ];
 
   static const List<double> _rightSwitchPortX = [
     0.22,
-    0.40,
-    0.58,
-    0.22,
-    0.40,
-    0.58
+    0.50,
+    0.78,
   ];
   static const List<double> _rightSwitchPortY = [
-    0.42,
-    0.42,
-    0.42,
-    0.62,
-    0.62,
-    0.62
+    0.67,
+    0.67,
+    0.67,
   ];
 
   static const List<double> _leftCpuPortX = [0.72, 0.72, 0.72];
-  static const List<double> _leftCpuPortY = [0.46, 0.56, 0.70];
+  static const List<double> _leftCpuPortY = [0.43, 0.59, 0.73];
 
   static const List<double> _rightCpuPortX = [0.28, 0.28, 0.28];
-  static const List<double> _rightCpuPortY = [0.46, 0.56, 0.70];
+  static const List<double> _rightCpuPortY = [0.43, 0.59, 0.73];
 
   static const List<Color> _wireColors = [
     Color(0xFF64C8FF),
@@ -76,23 +72,21 @@ class _Level8ScreenState extends State<Level8Screen> {
   final GlobalKey _stackKey = GlobalKey();
   final AudioPlayer _sfxPlayer = AudioPlayer();
 
-  // 0-1 router to switches, draggable on router.
-  // Blue (wire 0) starts on right; green (wire 1) starts on left.
-  List<int> _routerPortByWire = [3, 0];
+  // 0-1 top routers, draggable on either router.
+  List<int> _routerPortByWire = [1, 4];
 
-  // 2-5 switch starts, draggable on either switch.
-  List<int> _switchStartPortByWire = [4, 1, 3, 5];
+  // 2-5 middle switch, draggable on the switch.
+  List<int> _switchStartPortByWire = [2, 3, 4, 5];
 
   // 6 cpu to cpu, draggable on both CPUs.
-  List<int> _cpuLeftPortByWire = [0];
+  List<int> _cpuLeftPortByWire = [2];
   List<int> _cpuRightPortByWire = [2];
 
-  // Blue/red wires can connect to any port on either switch.
-  List<int> _routerEndLeftSwitchPort = [1];
+  // Router-to-switch and switch-to-CPU endpoints.
+  List<int> _routerEndLeftSwitchPort = [0];
   List<int> _routerEndRightSwitchPort = [1];
-  List<int> _interSwitchEndRightPort = [9, 11];
-  List<int> _toRightCpuEndPort = [0];
-  List<int> _toLeftCpuEndPort = [1];
+  List<int> _switchToLeftCpuEndPort = [0, 1];
+  List<int> _switchToRightCpuEndPort = [0, 1];
 
   int? _draggingWire;
   bool _draggingWireEnd = false;
@@ -171,15 +165,14 @@ class _Level8ScreenState extends State<Level8Screen> {
 
   void _resetLevel() {
     setState(() {
-      _routerPortByWire = [3, 0];
-      _switchStartPortByWire = [4, 1, 3, 5];
-      _cpuLeftPortByWire = [0];
+      _routerPortByWire = [1, 4];
+      _switchStartPortByWire = [2, 3, 4, 5];
+      _cpuLeftPortByWire = [2];
       _cpuRightPortByWire = [2];
-      _routerEndLeftSwitchPort = [1];
+      _routerEndLeftSwitchPort = [0];
       _routerEndRightSwitchPort = [1];
-      _interSwitchEndRightPort = [9, 11];
-      _toRightCpuEndPort = [0];
-      _toLeftCpuEndPort = [1];
+      _switchToLeftCpuEndPort = [0, 1];
+      _switchToRightCpuEndPort = [0, 1];
       _draggingWire = null;
       _draggingWireEnd = false;
       _dragPosition = null;
@@ -394,7 +387,7 @@ class _Level8ScreenState extends State<Level8Screen> {
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (_) => const Level8Screen(),
+                        builder: (_) => const Level9Screen(),
                       ),
                     );
                   },
@@ -508,39 +501,38 @@ class _Level8ScreenState extends State<Level8Screen> {
 
     if (wireIndex == 2 || wireIndex == 3) {
       final idx = wireIndex - 2;
-      if (_interSwitchEndRightPort[idx] == targetPort) {
+      if (_switchToLeftCpuEndPort[idx] == targetPort) {
         return;
       }
-      final other = _interSwitchEndRightPort.indexOf(targetPort);
+      final other = _switchToLeftCpuEndPort.indexOf(targetPort);
       setState(() {
         if (other != -1 && other != idx) {
-          final current = _interSwitchEndRightPort[idx];
-          _interSwitchEndRightPort[idx] = targetPort;
-          _interSwitchEndRightPort[other] = current;
+          final current = _switchToLeftCpuEndPort[idx];
+          _switchToLeftCpuEndPort[idx] = targetPort;
+          _switchToLeftCpuEndPort[other] = current;
         } else {
-          _interSwitchEndRightPort[idx] = targetPort;
+          _switchToLeftCpuEndPort[idx] = targetPort;
         }
       });
       unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
 
-    if (wireIndex == 4) {
-      if (_toRightCpuEndPort[0] == targetPort) {
+    if (wireIndex == 4 || wireIndex == 5) {
+      final idx = wireIndex - 4;
+      if (_switchToRightCpuEndPort[idx] == targetPort) {
         return;
       }
-      _toRightCpuEndPort[0] = targetPort;
-      setState(() {});
-      unawaited(_playSfx('sfx_attach.wav'));
-      return;
-    }
-
-    if (wireIndex == 5) {
-      if (_toLeftCpuEndPort[0] == targetPort) {
-        return;
-      }
-      _toLeftCpuEndPort[0] = targetPort;
-      setState(() {});
+      final other = _switchToRightCpuEndPort.indexOf(targetPort);
+      setState(() {
+        if (other != -1 && other != idx) {
+          final current = _switchToRightCpuEndPort[idx];
+          _switchToRightCpuEndPort[idx] = targetPort;
+          _switchToRightCpuEndPort[other] = current;
+        } else {
+          _switchToRightCpuEndPort[idx] = targetPort;
+        }
+      });
       unawaited(_playSfx('sfx_attach.wav'));
       return;
     }
@@ -718,16 +710,16 @@ class _Level8ScreenState extends State<Level8Screen> {
             final width = constraints.maxWidth;
             final height = constraints.maxHeight;
 
-            final routerWidth = math.min(width * 0.44, 170.0);
-            final routerLeft = (width - routerWidth) / 2;
-            final routerTop = 52.0;
+            final topRouterWidth = math.min(width * 0.40, 132.0);
+            final topRouterLeft =
+                math.max(8.0, (width / 2) - topRouterWidth - 24);
+            final topRouterRight =
+                math.min(width - topRouterWidth - 8.0, (width / 2) + 24);
+            final topRouterTop = 118.0;
 
-            final switchWidth = math.min(width * 0.40, 130.0);
-            final leftSwitchLeft =
-                math.max(6.0, (width / 2) - switchWidth - 28);
-            final rightSwitchLeft =
-                math.min(width - switchWidth - 6.0, (width / 2) + 28);
-            final switchTop = math.min(height * 0.41, 260.0);
+            final switchWidth = math.min(width * 0.46, 172.0);
+            final switchLeft = (width - switchWidth) / 2;
+            final switchTop = math.min(height * 0.37, 255.0);
 
             final cpuWidth = math.min(width * 0.52, 180.0);
             final leftCpuLeft = math.max(4.0, (width / 2) - cpuWidth - 22);
@@ -735,32 +727,32 @@ class _Level8ScreenState extends State<Level8Screen> {
                 math.min(width - cpuWidth - 4.0, (width / 2) + 22);
             final cpuTop = math.min(height * 0.64, height - cpuWidth - 22);
 
-            final routerPorts = List<Offset>.generate(
-              _routerPortX.length,
-              (i) => Offset(
-                routerLeft + (routerWidth * _routerPortX[i]),
-                routerTop + (routerWidth * _routerPortY),
-              ),
-            );
-
-            final leftSwitchPorts = List<Offset>.generate(
+            final leftRouterPorts = List<Offset>.generate(
               _leftSwitchPortX.length,
               (i) => Offset(
-                leftSwitchLeft + (switchWidth * _leftSwitchPortX[i]),
-                switchTop + (switchWidth * _leftSwitchPortY[i]),
+                topRouterLeft + (topRouterWidth * _leftSwitchPortX[i]),
+                topRouterTop + (topRouterWidth * _leftSwitchPortY[i]),
               ),
             );
 
-            final rightSwitchPorts = List<Offset>.generate(
+            final rightRouterPorts = List<Offset>.generate(
               _rightSwitchPortX.length,
               (i) => Offset(
-                rightSwitchLeft + (switchWidth * _rightSwitchPortX[i]),
-                switchTop + (switchWidth * _rightSwitchPortY[i]),
+                topRouterRight + (topRouterWidth * _rightSwitchPortX[i]),
+                topRouterTop + (topRouterWidth * _rightSwitchPortY[i]),
               ),
             );
-            final switchPorts = <Offset>[
-              ...leftSwitchPorts,
-              ...rightSwitchPorts
+
+            final switchPorts = List<Offset>.generate(
+              _switchPortX.length,
+              (i) => Offset(
+                switchLeft + (switchWidth * _switchPortX[i]),
+                switchTop + (switchWidth * _switchPortY[i]),
+              ),
+            );
+            final routerPorts = <Offset>[
+              ...leftRouterPorts,
+              ...rightRouterPorts
             ];
 
             final leftCpuPorts = List<Offset>.generate(
@@ -788,12 +780,12 @@ class _Level8ScreenState extends State<Level8Screen> {
             ];
 
             final ends = <Offset>[
-              leftSwitchPorts[_routerEndLeftSwitchPort[0]],
-              rightSwitchPorts[_routerEndRightSwitchPort[0]],
-              switchPorts[_interSwitchEndRightPort[0]],
-              switchPorts[_interSwitchEndRightPort[1]],
-              rightCpuPorts[_toRightCpuEndPort[0]],
-              leftCpuPorts[_toLeftCpuEndPort[0]],
+              switchPorts[_routerEndLeftSwitchPort[0]],
+              switchPorts[_routerEndRightSwitchPort[0]],
+              leftCpuPorts[_switchToLeftCpuEndPort[0]],
+              leftCpuPorts[_switchToLeftCpuEndPort[1]],
+              rightCpuPorts[_switchToRightCpuEndPort[0]],
+              rightCpuPorts[_switchToRightCpuEndPort[1]],
               rightCpuPorts[_cpuRightPortByWire[0]],
             ];
 
@@ -862,31 +854,31 @@ class _Level8ScreenState extends State<Level8Screen> {
                   ),
                 ),
                 Positioned(
-                  top: routerTop,
-                  left: routerLeft,
+                  top: topRouterTop,
+                  left: topRouterLeft,
                   child: Image.asset('assets/images/modem.png',
-                      width: routerWidth),
+                      width: topRouterWidth),
                 ),
                 Positioned(
-                  top: routerTop + (routerWidth * 0.40),
-                  left: routerLeft + (routerWidth * 0.36),
+                  top: topRouterTop,
+                  left: topRouterRight,
+                  child: Image.asset('assets/images/modem.png',
+                      width: topRouterWidth),
+                ),
+                Positioned(
+                  top: topRouterTop - 34,
+                  left: (width * 0.41),
                   child: const _UnitLabel(text: 'Router'),
                 ),
                 Positioned(
                   top: switchTop,
-                  left: leftSwitchLeft,
-                  child: Image.asset('assets/images/switch.png',
-                      width: switchWidth),
-                ),
-                Positioned(
-                  top: switchTop,
-                  left: rightSwitchLeft,
+                  left: switchLeft,
                   child: Image.asset('assets/images/switch.png',
                       width: switchWidth),
                 ),
                 Positioned(
                   top: switchTop - 34,
-                  left: (width * 0.43),
+                  left: (width * 0.42),
                   child: const _UnitLabel(text: 'Switch'),
                 ),
                 Positioned(
@@ -917,16 +909,18 @@ class _Level8ScreenState extends State<Level8Screen> {
                 ),
                 for (var i = 0; i < routerPorts.length; i++)
                   _ghostPort(routerPorts[i]),
-                for (var i = 0; i < leftSwitchPorts.length; i++)
-                  _ghostPort(leftSwitchPorts[i]),
-                for (var i = 0; i < rightSwitchPorts.length; i++)
-                  _ghostPort(rightSwitchPorts[i]),
+                for (var i = 0; i < leftRouterPorts.length; i++)
+                  _ghostPort(leftRouterPorts[i]),
+                for (var i = 0; i < rightRouterPorts.length; i++)
+                  _ghostPort(rightRouterPorts[i]),
                 for (var i = 0; i < leftCpuPorts.length; i++)
                   _ghostPort(leftCpuPorts[i]),
                 for (var i = 0; i < rightCpuPorts.length; i++)
                   _ghostPort(rightCpuPorts[i]),
+                for (var i = 0; i < switchPorts.length; i++)
+                  _switchPort(switchPorts[i]),
 
-                // Draggable switch ends: wires 0-3
+                // Draggable endpoints for the router pair.
                 _dragHandle(
                   position: ends[0],
                   color: _wireColors[0],
@@ -956,9 +950,9 @@ class _Level8ScreenState extends State<Level8Screen> {
                       _onWireDragStart(2, details, dragEnd: true),
                   onPanUpdate: (details) => _onWireDragUpdate(2, details),
                   onPanEnd: (_) =>
-                      _onWireDragEnd(2, switchPorts, dragEnd: true),
+                      _onWireDragEnd(2, leftCpuPorts, dragEnd: true),
                   onPanCancel: () =>
-                      _onWireDragEnd(2, switchPorts, dragEnd: true),
+                      _onWireDragEnd(2, leftCpuPorts, dragEnd: true),
                 ),
                 _dragHandle(
                   position: ends[3],
@@ -967,9 +961,9 @@ class _Level8ScreenState extends State<Level8Screen> {
                       _onWireDragStart(3, details, dragEnd: true),
                   onPanUpdate: (details) => _onWireDragUpdate(3, details),
                   onPanEnd: (_) =>
-                      _onWireDragEnd(3, switchPorts, dragEnd: true),
+                      _onWireDragEnd(3, leftCpuPorts, dragEnd: true),
                   onPanCancel: () =>
-                      _onWireDragEnd(3, switchPorts, dragEnd: true),
+                      _onWireDragEnd(3, leftCpuPorts, dragEnd: true),
                 ),
                 for (var wire = 0; wire < 2; wire++)
                   _dragHandle(
@@ -986,8 +980,10 @@ class _Level8ScreenState extends State<Level8Screen> {
                     color: _wireColors[wire],
                     onPanStart: (details) => _onWireDragStart(wire, details),
                     onPanUpdate: (details) => _onWireDragUpdate(wire, details),
-                    onPanEnd: (_) => _onWireDragEnd(wire, switchPorts),
-                    onPanCancel: () => _onWireDragEnd(wire, switchPorts),
+                    onPanEnd: (_) => _onWireDragEnd(
+                        wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
+                    onPanCancel: () => _onWireDragEnd(
+                        wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
                   ),
 
                 // Draggable CPU endpoints
@@ -1055,7 +1051,7 @@ class _Level8ScreenState extends State<Level8Screen> {
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 24),
-                        child: _Level6LearningCard(
+                        child: _Level8LearningCard(
                             onReady: _startLevelFromLearningCard),
                       ),
                     ),
@@ -1079,6 +1075,22 @@ class _Level8ScreenState extends State<Level8Screen> {
           shape: BoxShape.circle,
           color: Colors.transparent,
           border: Border.all(color: const Color(0xFFD0D0D0), width: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _switchPort(Offset p) {
+    return Positioned(
+      left: p.dx - 10,
+      top: p.dy - 10,
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.transparent,
+          border: Border.all(color: const Color(0xFFE9ECF4), width: 3),
         ),
       ),
     );
@@ -1208,8 +1220,8 @@ class _WirePainter extends CustomPainter {
   }
 }
 
-class _Level6LearningCard extends StatelessWidget {
-  const _Level6LearningCard({required this.onReady});
+class _Level8LearningCard extends StatelessWidget {
+  const _Level8LearningCard({required this.onReady});
 
   final VoidCallback onReady;
 
@@ -1245,7 +1257,7 @@ class _Level6LearningCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Scaling Up',
+                  'Reliability & Redundancy',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -1255,7 +1267,7 @@ class _Level6LearningCard extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Level 8 - LANs',
+                  'Level 8 - The Server',
                   style: TextStyle(
                     color: Color(0xFFE0FFFA),
                     fontSize: 20,
@@ -1278,7 +1290,7 @@ class _Level6LearningCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _pill('Levels 4-6', const Color(0xFF1A2D5A), true),
+                      child: _pill('Levels 7-9', const Color(0xFF1A2D5A), true),
                     ),
                   ],
                 ),
@@ -1306,7 +1318,7 @@ class _Level6LearningCard extends StatelessWidget {
                           color: Color(0xFF0BBFA7), size: 34),
                       SizedBox(height: 8),
                       Text(
-                        'LOCAL AREA NETWORK',
+                        'REDUNDANT NETWORK',
                         style: TextStyle(
                           color: Color(0xFF0BBFA7),
                           fontWeight: FontWeight.w800,
@@ -1317,11 +1329,10 @@ class _Level6LearningCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _pill('Introduction to LANs', const Color(0xFF1E2E58), true),
+                _pill('The "Safety Net"', const Color(0xFF1E2E58), true),
                 const SizedBox(height: 12),
                 const Text(
-                  'A LAN is a group of computers and devices sharing a common communication line '
-                  'within a small area such as an office or home. You can expand a network to support many users while maintaining high speeds.',
+                  'Redundancy means adding duplicate equipment to a network. If a primary router or cable fails, the backup takes over instantly, preventing downtime. In professional IT, the goal is often "Five Nines" (99.999%) uptime.',
                   style: TextStyle(
                     color: Color(0xFFC8D5FF),
                     fontSize: 12,
@@ -1340,7 +1351,7 @@ class _Level6LearningCard extends StatelessWidget {
                     border: Border.all(color: const Color(0xFF584E70)),
                   ),
                   child: const Text(
-                    'FUN FACT\nOne of the largest LAN events in the world gathers thousands of gamers on a single local network.',
+                    'FUN FACT\nCompanies spend millions on redundancy because every minute a network is "down" can cost thousands of dollars in lost work.',
                     style: TextStyle(
                       color: Color(0xFFC5B7DF),
                       fontSize: 12,
@@ -1363,7 +1374,7 @@ class _Level6LearningCard extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      '-> Ready to Play!',
+                      'Ready to Play!',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
