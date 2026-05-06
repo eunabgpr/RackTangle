@@ -1,0 +1,2 @@
+D:/James_PLM_Projects/Graphics/RackTangle/android/app/.cxx/Debug/1u4v4528/x86/CMakeFiles/edit_cache.dir
+D:/James_PLM_Projects/Graphics/RackTangle/android/app/.cxx/Debug/1u4v4528/x86/CMakeFiles/rebuild_cache.dir
