@@ -1257,7 +1257,7 @@ class _Level9LearningCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Reliability & Redundancy',
+                  'ISP Redundancy',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -1267,7 +1267,7 @@ class _Level9LearningCard extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Level 8 - The Server',
+                  'Level 9 - Dual Internet',
                   style: TextStyle(
                     color: Color(0xFFE0FFFA),
                     fontSize: 20,
@@ -1296,7 +1296,7 @@ class _Level9LearningCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  '- Level 8 - Concept',
+                  '- Level 9 - Concept',
                   style: TextStyle(
                     color: Color(0xFF29D9C0),
                     fontSize: 14,
@@ -1318,7 +1318,7 @@ class _Level9LearningCard extends StatelessWidget {
                           color: Color(0xFF0BBFA7), size: 34),
                       SizedBox(height: 8),
                       Text(
-                        'REDUNDANT NETWORK',
+                        'DUAL ISP CONNECTION',
                         style: TextStyle(
                           color: Color(0xFF0BBFA7),
                           fontWeight: FontWeight.w800,
@@ -1329,10 +1329,10 @@ class _Level9LearningCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _pill('The "Safety Net"', const Color(0xFF1E2E58), true),
+                _pill('Connecting the World"', const Color(0xFF1E2E58), true),
                 const SizedBox(height: 12),
                 const Text(
-                  'Redundancy means adding duplicate equipment to a network. If a primary router or cable fails, the backup takes over instantly, preventing downtime. In professional IT, the goal is often "Five Nines" (99.999%) uptime.',
+                  'Even with a perfect internal network, your Internet Service Provider (ISP) can fail. Businesses often pay for two different internet connections - sometimes one fiver-optic and one satellite - so if one provider has an outage, the whole company stays online.',
                   style: TextStyle(
                     color: Color(0xFFC8D5FF),
                     fontSize: 12,
@@ -1351,7 +1351,7 @@ class _Level9LearningCard extends StatelessWidget {
                     border: Border.all(color: const Color(0xFF584E70)),
                   ),
                   child: const Text(
-                    'FUN FACT\nCompanies spend millions on redundancy because every minute a network is "down" can cost thousands of dollars in lost work.',
+                    'FUN FACT\nMost of the world\'s internet travels through massive cables at the bottom of the ocean. - not through satellites!',
                     style: TextStyle(
                       color: Color(0xFFC5B7DF),
                       fontSize: 12,
