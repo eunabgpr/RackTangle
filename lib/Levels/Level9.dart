@@ -345,7 +345,7 @@ class _Level9ScreenState extends State<Level9Screen> {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'LEVEL 8',
+                  'LEVEL 9',
                   style: TextStyle(
                     color: Color(0xFF8A90A8),
                     fontSize: 28,
@@ -671,7 +671,7 @@ class _Level9ScreenState extends State<Level9Screen> {
           ),
         ),
         title: const Text(
-          'Level 8',
+          'Level 9',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -708,7 +708,7 @@ class _Level9ScreenState extends State<Level9Screen> {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final height = constraints.maxHeight;
+            final height = 800.0;
 
             final topRouterWidth = math.min(width * 0.40, 132.0);
             final topRouterLeft =
@@ -716,6 +716,9 @@ class _Level9ScreenState extends State<Level9Screen> {
             final topRouterRight =
                 math.min(width - topRouterWidth - 8.0, (width / 2) + 24);
             final topRouterTop = 118.0;
+
+            final ispWidth = topRouterWidth * 0.5;
+            final ispTop = topRouterTop - ispWidth - 20;
 
             final switchWidth = math.min(width * 0.46, 172.0);
             final switchLeft = (width - switchWidth) / 2;
@@ -727,58 +730,42 @@ class _Level9ScreenState extends State<Level9Screen> {
                 math.min(width - cpuWidth - 4.0, (width / 2) + 22);
             final cpuTop = math.min(height * 0.64, height - cpuWidth - 22);
 
+            final totalHeight = cpuTop + cpuWidth + 100;
+
             final leftRouterPorts = List<Offset>.generate(
-              _leftSwitchPortX.length,
-              (i) => Offset(
-                topRouterLeft + (topRouterWidth * _leftSwitchPortX[i]),
-                topRouterTop + (topRouterWidth * _leftSwitchPortY[i]),
-              ),
-            );
-
+                _leftSwitchPortX.length,
+                (i) => Offset(
+                    topRouterLeft + (topRouterWidth * _leftSwitchPortX[i]),
+                    topRouterTop + (topRouterWidth * _leftSwitchPortY[i])));
             final rightRouterPorts = List<Offset>.generate(
-              _rightSwitchPortX.length,
-              (i) => Offset(
-                topRouterRight + (topRouterWidth * _rightSwitchPortX[i]),
-                topRouterTop + (topRouterWidth * _rightSwitchPortY[i]),
-              ),
-            );
-
+                _rightSwitchPortX.length,
+                (i) => Offset(
+                    topRouterRight + (topRouterWidth * _rightSwitchPortX[i]),
+                    topRouterTop + (topRouterWidth * _rightSwitchPortY[i])));
             final switchPorts = List<Offset>.generate(
-              _switchPortX.length,
-              (i) => Offset(
-                switchLeft + (switchWidth * _switchPortX[i]),
-                switchTop + (switchWidth * _switchPortY[i]),
-              ),
-            );
+                _switchPortX.length,
+                (i) => Offset(switchLeft + (switchWidth * _switchPortX[i]),
+                    switchTop + (switchWidth * _switchPortY[i])));
             final routerPorts = <Offset>[
               ...leftRouterPorts,
               ...rightRouterPorts
             ];
-
             final leftCpuPorts = List<Offset>.generate(
-              _leftCpuPortX.length,
-              (i) => Offset(
-                leftCpuLeft + (cpuWidth * _leftCpuPortX[i]),
-                cpuTop + (cpuWidth * _leftCpuPortY[i]),
-              ),
-            );
-
+                _leftCpuPortX.length,
+                (i) => Offset(leftCpuLeft + (cpuWidth * _leftCpuPortX[i]),
+                    cpuTop + (cpuWidth * _leftCpuPortY[i])));
             final rightCpuPorts = List<Offset>.generate(
-              _rightCpuPortX.length,
-              (i) => Offset(
-                rightCpuLeft + (cpuWidth * _rightCpuPortX[i]),
-                cpuTop + (cpuWidth * _rightCpuPortY[i]),
-              ),
-            );
+                _rightCpuPortX.length,
+                (i) => Offset(rightCpuLeft + (cpuWidth * _rightCpuPortX[i]),
+                    cpuTop + (cpuWidth * _rightCpuPortY[i])));
 
             final starts = <Offset>[
               routerPorts[_routerPortByWire[0]],
               routerPorts[_routerPortByWire[1]],
               ..._switchStartPortByWire
                   .map((portIndex) => switchPorts[portIndex]),
-              leftCpuPorts[_cpuLeftPortByWire[0]],
+              leftCpuPorts[_cpuLeftPortByWire[0]]
             ];
-
             final ends = <Offset>[
               switchPorts[_routerEndLeftSwitchPort[0]],
               switchPorts[_routerEndRightSwitchPort[0]],
@@ -786,7 +773,7 @@ class _Level9ScreenState extends State<Level9Screen> {
               leftCpuPorts[_switchToLeftCpuEndPort[1]],
               rightCpuPorts[_switchToRightCpuEndPort[0]],
               rightCpuPorts[_switchToRightCpuEndPort[1]],
-              rightCpuPorts[_cpuRightPortByWire[0]],
+              rightCpuPorts[_cpuRightPortByWire[0]]
             ];
 
             if (_draggingWire != null && _dragPosition != null) {
@@ -800,13 +787,10 @@ class _Level9ScreenState extends State<Level9Screen> {
             final crossingCount = _crossingsFromLines(starts, ends);
             _checkAndHandleLevelClear(crossingCount);
 
-            return Stack(
-              key: _stackKey,
+            return Column(
               children: [
-                Positioned(
-                  top: 10,
-                  left: 25,
-                  right: 16,
+                Padding(
+                  padding: const EdgeInsets.only(top: 10, left: 25, right: 16),
                   child: Column(
                     children: [
                       Stack(
@@ -853,209 +837,253 @@ class _Level9ScreenState extends State<Level9Screen> {
                     ],
                   ),
                 ),
-                Positioned(
-                  top: topRouterTop,
-                  left: topRouterLeft,
-                  child: Image.asset('assets/images/modem.png',
-                      width: topRouterWidth),
-                ),
-                Positioned(
-                  top: topRouterTop,
-                  left: topRouterRight,
-                  child: Image.asset('assets/images/modem.png',
-                      width: topRouterWidth),
-                ),
-                Positioned(
-                  top: topRouterTop - 34,
-                  left: (width * 0.41),
-                  child: const _UnitLabel(text: 'Router'),
-                ),
-                Positioned(
-                  top: switchTop,
-                  left: switchLeft,
-                  child: Image.asset('assets/images/switch.png',
-                      width: switchWidth),
-                ),
-                Positioned(
-                  top: switchTop - 34,
-                  left: (width * 0.42),
-                  child: const _UnitLabel(text: 'Switch'),
-                ),
-                Positioned(
-                  top: cpuTop,
-                  left: leftCpuLeft,
-                  child:
-                      Image.asset('assets/images/leftCPU.png', width: cpuWidth),
-                ),
-                Positioned(
-                  top: cpuTop,
-                  left: rightCpuLeft,
-                  child: Image.asset('assets/images/rightCPU.png',
-                      width: cpuWidth),
-                ),
-                Positioned(
-                  top: cpuTop - 28,
-                  left: (width * 0.44),
-                  child: const _UnitLabel(text: 'CPU'),
-                ),
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _WirePainter(
-                      starts: starts,
-                      ends: ends,
-                      colors: _wireColors,
+                Expanded(
+                    child: SingleChildScrollView(
+                  child: SizedBox(
+                    height: totalHeight,
+                    width: width,
+                    child: Stack(
+                      key: _stackKey,
+                      children: [
+                        Positioned(
+                          top: ispTop,
+                          left: topRouterLeft + (topRouterWidth - ispWidth) / 2,
+                          child: Image.asset('assets/images/isp.png',
+                              width: ispWidth),
+                        ),
+                        Positioned(
+                          top: ispTop,
+                          left:
+                              topRouterRight + (topRouterWidth - ispWidth) / 2,
+                          child: Image.asset('assets/images/isp.png',
+                              width: ispWidth),
+                        ),
+                        Positioned(
+                          top: ispTop - 34,
+                          left: (width * 0.41),
+                          child: const _UnitLabel(text: 'ISP'),
+                        ),
+                        Positioned(
+                          top: topRouterTop,
+                          left: topRouterLeft,
+                          child: Image.asset('assets/images/modem.png',
+                              width: topRouterWidth),
+                        ),
+                        Positioned(
+                          top: topRouterTop,
+                          left: topRouterRight,
+                          child: Image.asset('assets/images/modem.png',
+                              width: topRouterWidth),
+                        ),
+                        Positioned(
+                          top: topRouterTop - 34,
+                          left: (width * 0.41),
+                          child: const _UnitLabel(text: 'Router'),
+                        ),
+                        Positioned(
+                          top: switchTop,
+                          left: switchLeft,
+                          child: Image.asset('assets/images/switch.png',
+                              width: switchWidth),
+                        ),
+                        Positioned(
+                          top: switchTop - 34,
+                          left: (width * 0.42),
+                          child: const _UnitLabel(text: 'Switch'),
+                        ),
+                        Positioned(
+                          top: cpuTop,
+                          left: leftCpuLeft,
+                          child: Image.asset('assets/images/leftCPU.png',
+                              width: cpuWidth),
+                        ),
+                        Positioned(
+                          top: cpuTop,
+                          left: rightCpuLeft,
+                          child: Image.asset('assets/images/rightCPU.png',
+                              width: cpuWidth),
+                        ),
+                        Positioned(
+                          top: cpuTop - 28,
+                          left: (width * 0.44),
+                          child: const _UnitLabel(text: 'CPU'),
+                        ),
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _WirePainter(
+                              starts: starts,
+                              ends: ends,
+                              colors: _wireColors,
+                            ),
+                          ),
+                        ),
+                        for (var i = 0; i < routerPorts.length; i++)
+                          _ghostPort(routerPorts[i]),
+                        for (var i = 0; i < leftRouterPorts.length; i++)
+                          _ghostPort(leftRouterPorts[i]),
+                        for (var i = 0; i < rightRouterPorts.length; i++)
+                          _ghostPort(rightRouterPorts[i]),
+                        for (var i = 0; i < leftCpuPorts.length; i++)
+                          _ghostPort(leftCpuPorts[i]),
+                        for (var i = 0; i < rightCpuPorts.length; i++)
+                          _ghostPort(rightCpuPorts[i]),
+                        for (var i = 0; i < switchPorts.length; i++)
+                          _switchPort(switchPorts[i]),
+
+                        // Draggable endpoints for the router pair.
+                        _dragHandle(
+                          position: ends[0],
+                          color: _wireColors[0],
+                          onPanStart: (details) =>
+                              _onWireDragStart(0, details, dragEnd: true),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(0, details),
+                          onPanEnd: (_) =>
+                              _onWireDragEnd(0, switchPorts, dragEnd: true),
+                          onPanCancel: () =>
+                              _onWireDragEnd(0, switchPorts, dragEnd: true),
+                        ),
+                        _dragHandle(
+                          position: ends[1],
+                          color: _wireColors[1],
+                          onPanStart: (details) =>
+                              _onWireDragStart(1, details, dragEnd: true),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(1, details),
+                          onPanEnd: (_) =>
+                              _onWireDragEnd(1, switchPorts, dragEnd: true),
+                          onPanCancel: () =>
+                              _onWireDragEnd(1, switchPorts, dragEnd: true),
+                        ),
+                        _dragHandle(
+                          position: ends[2],
+                          color: _wireColors[2],
+                          onPanStart: (details) =>
+                              _onWireDragStart(2, details, dragEnd: true),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(2, details),
+                          onPanEnd: (_) =>
+                              _onWireDragEnd(2, leftCpuPorts, dragEnd: true),
+                          onPanCancel: () =>
+                              _onWireDragEnd(2, leftCpuPorts, dragEnd: true),
+                        ),
+                        _dragHandle(
+                          position: ends[3],
+                          color: _wireColors[3],
+                          onPanStart: (details) =>
+                              _onWireDragStart(3, details, dragEnd: true),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(3, details),
+                          onPanEnd: (_) =>
+                              _onWireDragEnd(3, leftCpuPorts, dragEnd: true),
+                          onPanCancel: () =>
+                              _onWireDragEnd(3, leftCpuPorts, dragEnd: true),
+                        ),
+                        for (var wire = 0; wire < 2; wire++)
+                          _dragHandle(
+                            position: starts[wire],
+                            color: _wireColors[wire],
+                            onPanStart: (details) =>
+                                _onWireDragStart(wire, details),
+                            onPanUpdate: (details) =>
+                                _onWireDragUpdate(wire, details),
+                            onPanEnd: (_) => _onWireDragEnd(wire, routerPorts),
+                            onPanCancel: () =>
+                                _onWireDragEnd(wire, routerPorts),
+                          ),
+                        for (var wire = 2; wire < 6; wire++)
+                          _dragHandle(
+                            position: starts[wire],
+                            color: _wireColors[wire],
+                            onPanStart: (details) =>
+                                _onWireDragStart(wire, details),
+                            onPanUpdate: (details) =>
+                                _onWireDragUpdate(wire, details),
+                            onPanEnd: (_) => _onWireDragEnd(
+                                wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
+                            onPanCancel: () => _onWireDragEnd(
+                                wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
+                          ),
+
+                        // Draggable CPU endpoints
+                        _dragHandle(
+                          position: ends[4],
+                          color: _wireColors[4],
+                          onPanStart: (details) =>
+                              _onWireDragStart(4, details, dragEnd: true),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(4, details),
+                          onPanEnd: (_) =>
+                              _onWireDragEnd(4, rightCpuPorts, dragEnd: true),
+                          onPanCancel: () =>
+                              _onWireDragEnd(4, rightCpuPorts, dragEnd: true),
+                        ),
+                        _dragHandle(
+                          position: ends[5],
+                          color: _wireColors[5],
+                          onPanStart: (details) =>
+                              _onWireDragStart(5, details, dragEnd: true),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(5, details),
+                          onPanEnd: (_) =>
+                              _onWireDragEnd(5, leftCpuPorts, dragEnd: true),
+                          onPanCancel: () =>
+                              _onWireDragEnd(5, leftCpuPorts, dragEnd: true),
+                        ),
+                        _dragHandle(
+                          position: starts[6],
+                          color: _wireColors[6],
+                          onPanStart: (details) => _onWireDragStart(6, details),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(6, details),
+                          onPanEnd: (_) => _onWireDragEnd(6, leftCpuPorts),
+                          onPanCancel: () => _onWireDragEnd(6, leftCpuPorts),
+                        ),
+                        _dragHandle(
+                          position: ends[6],
+                          color: _wireColors[6],
+                          onPanStart: (details) =>
+                              _onWireDragStart(6, details, dragEnd: true),
+                          onPanUpdate: (details) =>
+                              _onWireDragUpdate(6, details),
+                          onPanEnd: (_) =>
+                              _onWireDragEnd(6, rightCpuPorts, dragEnd: true),
+                          onPanCancel: () =>
+                              _onWireDragEnd(6, rightCpuPorts, dragEnd: true),
+                        ),
+
+                        for (var wire = 4; wire < 7; wire++)
+                          Positioned(
+                            left: ends[wire].dx - 10,
+                            top: ends[wire].dy - 10,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: _wireColors[wire],
+                                shape: BoxShape.circle,
+                                border:
+                                    Border.all(color: Colors.black54, width: 2),
+                              ),
+                            ),
+                          ),
+                        if (_showPrePlayModule)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black38,
+                              alignment: Alignment.center,
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 24),
+                                child: _Level9LearningCard(
+                                    onReady: _startLevelFromLearningCard),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ),
-                for (var i = 0; i < routerPorts.length; i++)
-                  _ghostPort(routerPorts[i]),
-                for (var i = 0; i < leftRouterPorts.length; i++)
-                  _ghostPort(leftRouterPorts[i]),
-                for (var i = 0; i < rightRouterPorts.length; i++)
-                  _ghostPort(rightRouterPorts[i]),
-                for (var i = 0; i < leftCpuPorts.length; i++)
-                  _ghostPort(leftCpuPorts[i]),
-                for (var i = 0; i < rightCpuPorts.length; i++)
-                  _ghostPort(rightCpuPorts[i]),
-                for (var i = 0; i < switchPorts.length; i++)
-                  _switchPort(switchPorts[i]),
-
-                // Draggable endpoints for the router pair.
-                _dragHandle(
-                  position: ends[0],
-                  color: _wireColors[0],
-                  onPanStart: (details) =>
-                      _onWireDragStart(0, details, dragEnd: true),
-                  onPanUpdate: (details) => _onWireDragUpdate(0, details),
-                  onPanEnd: (_) =>
-                      _onWireDragEnd(0, switchPorts, dragEnd: true),
-                  onPanCancel: () =>
-                      _onWireDragEnd(0, switchPorts, dragEnd: true),
-                ),
-                _dragHandle(
-                  position: ends[1],
-                  color: _wireColors[1],
-                  onPanStart: (details) =>
-                      _onWireDragStart(1, details, dragEnd: true),
-                  onPanUpdate: (details) => _onWireDragUpdate(1, details),
-                  onPanEnd: (_) =>
-                      _onWireDragEnd(1, switchPorts, dragEnd: true),
-                  onPanCancel: () =>
-                      _onWireDragEnd(1, switchPorts, dragEnd: true),
-                ),
-                _dragHandle(
-                  position: ends[2],
-                  color: _wireColors[2],
-                  onPanStart: (details) =>
-                      _onWireDragStart(2, details, dragEnd: true),
-                  onPanUpdate: (details) => _onWireDragUpdate(2, details),
-                  onPanEnd: (_) =>
-                      _onWireDragEnd(2, leftCpuPorts, dragEnd: true),
-                  onPanCancel: () =>
-                      _onWireDragEnd(2, leftCpuPorts, dragEnd: true),
-                ),
-                _dragHandle(
-                  position: ends[3],
-                  color: _wireColors[3],
-                  onPanStart: (details) =>
-                      _onWireDragStart(3, details, dragEnd: true),
-                  onPanUpdate: (details) => _onWireDragUpdate(3, details),
-                  onPanEnd: (_) =>
-                      _onWireDragEnd(3, leftCpuPorts, dragEnd: true),
-                  onPanCancel: () =>
-                      _onWireDragEnd(3, leftCpuPorts, dragEnd: true),
-                ),
-                for (var wire = 0; wire < 2; wire++)
-                  _dragHandle(
-                    position: starts[wire],
-                    color: _wireColors[wire],
-                    onPanStart: (details) => _onWireDragStart(wire, details),
-                    onPanUpdate: (details) => _onWireDragUpdate(wire, details),
-                    onPanEnd: (_) => _onWireDragEnd(wire, routerPorts),
-                    onPanCancel: () => _onWireDragEnd(wire, routerPorts),
-                  ),
-                for (var wire = 2; wire < 6; wire++)
-                  _dragHandle(
-                    position: starts[wire],
-                    color: _wireColors[wire],
-                    onPanStart: (details) => _onWireDragStart(wire, details),
-                    onPanUpdate: (details) => _onWireDragUpdate(wire, details),
-                    onPanEnd: (_) => _onWireDragEnd(
-                        wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
-                    onPanCancel: () => _onWireDragEnd(
-                        wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
-                  ),
-
-                // Draggable CPU endpoints
-                _dragHandle(
-                  position: ends[4],
-                  color: _wireColors[4],
-                  onPanStart: (details) =>
-                      _onWireDragStart(4, details, dragEnd: true),
-                  onPanUpdate: (details) => _onWireDragUpdate(4, details),
-                  onPanEnd: (_) =>
-                      _onWireDragEnd(4, rightCpuPorts, dragEnd: true),
-                  onPanCancel: () =>
-                      _onWireDragEnd(4, rightCpuPorts, dragEnd: true),
-                ),
-                _dragHandle(
-                  position: ends[5],
-                  color: _wireColors[5],
-                  onPanStart: (details) =>
-                      _onWireDragStart(5, details, dragEnd: true),
-                  onPanUpdate: (details) => _onWireDragUpdate(5, details),
-                  onPanEnd: (_) =>
-                      _onWireDragEnd(5, leftCpuPorts, dragEnd: true),
-                  onPanCancel: () =>
-                      _onWireDragEnd(5, leftCpuPorts, dragEnd: true),
-                ),
-                _dragHandle(
-                  position: starts[6],
-                  color: _wireColors[6],
-                  onPanStart: (details) => _onWireDragStart(6, details),
-                  onPanUpdate: (details) => _onWireDragUpdate(6, details),
-                  onPanEnd: (_) => _onWireDragEnd(6, leftCpuPorts),
-                  onPanCancel: () => _onWireDragEnd(6, leftCpuPorts),
-                ),
-                _dragHandle(
-                  position: ends[6],
-                  color: _wireColors[6],
-                  onPanStart: (details) =>
-                      _onWireDragStart(6, details, dragEnd: true),
-                  onPanUpdate: (details) => _onWireDragUpdate(6, details),
-                  onPanEnd: (_) =>
-                      _onWireDragEnd(6, rightCpuPorts, dragEnd: true),
-                  onPanCancel: () =>
-                      _onWireDragEnd(6, rightCpuPorts, dragEnd: true),
-                ),
-
-                for (var wire = 4; wire < 7; wire++)
-                  Positioned(
-                    left: ends[wire].dx - 10,
-                    top: ends[wire].dy - 10,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: _wireColors[wire],
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black54, width: 2),
-                      ),
-                    ),
-                  ),
-                if (_showPrePlayModule)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black38,
-                      alignment: Alignment.center,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 24),
-                        child: _Level9LearningCard(
-                            onReady: _startLevelFromLearningCard),
-                      ),
-                    ),
-                  ),
+                ))
               ],
             );
           },
