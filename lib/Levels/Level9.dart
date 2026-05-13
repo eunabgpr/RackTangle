@@ -219,7 +219,7 @@ class _Level9ScreenState extends State<Level9Screen> {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'LEVEL 8',
+                  'LEVEL 9',
                   style: TextStyle(
                     color: Color(0xFF8A90A8),
                     fontSize: 28,
