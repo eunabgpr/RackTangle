@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:racktangle/Levels/Level1.dart';
 import 'package:racktangle/howtoplay.dart';
+import 'package:racktangle/settings.dart';
 
 void main() {
   runApp(const RacktangleApp());
@@ -160,8 +161,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 10),
                 OutlinedButton(
-                  onPressed: () {
-                    _playButtonSfx();
+                  onPressed: () async {
+                    await _playButtonSfx();
+                    if (!context.mounted) {
+                      return;
+                    }
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const HowToPlayScreen(),
+                      ),
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF7D7DB2),
