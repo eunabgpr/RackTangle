@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (context) => const HowToPlayScreen(),
+                        builder: (context) => const SettingsScreen(),
                       ),
                     );
                   },
