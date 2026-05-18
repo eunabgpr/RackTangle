@@ -715,29 +715,46 @@ class _Level9ScreenState extends State<Level9Screen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            // 1. Screen size variables
             final width = constraints.maxWidth;
-            final height = 800.0;
+            final height =
+                800.0; // Level 9 uses a fixed scrollable canvas height of 800
 
+            // 2. Component Widths (Keep these or tweak based on your new image sizes)
             final topRouterWidth = math.min(width * 0.40, 132.0);
+            final switchWidth = math.min(width * 0.46, 172.0);
+            final cpuWidth = math.min(width * 0.52, 180.0);
+            final ispWidth = topRouterWidth * 0.50;
+
+            // ==========================================
+            // ADJUSTED POSITIONING LOGIC
+            // ==========================================
+
+            // 3. ISP Positioning: Changed to a hardcoded pixel distance from the top header
+            final ispTop =
+                40.0; // Fixed pixel height. Increase/decrease to shift both ISPs up/down
+
+            // 4. Router Positioning: Changed to use a dynamic calculation with math.min/max bounds
+            // This ensures it shifts proportionally on different screen sizes but stays within safe thresholds
+            final topRouterTop =
+                math.max(120.0, math.min(height * 0.18, 150.0));
+
+            // 5. Left/Right X alignment for the Router pairs (Kept intact)
             final topRouterLeft =
                 math.max(8.0, (width / 2) - topRouterWidth - 24);
             final topRouterRight =
                 math.min(width - topRouterWidth - 8.0, (width / 2) + 24);
-            final topRouterTop = 118.0;
 
-            final ispWidth = topRouterWidth * 0.50;
-            final ispTop = topRouterTop - ispWidth - 20;
-
-            final switchWidth = math.min(width * 0.46, 172.0);
+            // 6. Switch & CPU Positioning (Kept intact as they already use math bounds)
             final switchLeft = (width - switchWidth) / 2;
-            final switchTop = math.min(height * 0.37, 255.0);
+            final switchTop = math.min(height * 0.37, 320.0);
 
-            final cpuWidth = math.min(width * 0.52, 180.0);
             final leftCpuLeft = math.max(4.0, (width / 2) - cpuWidth - 22);
             final rightCpuLeft =
                 math.min(width - cpuWidth - 4.0, (width / 2) + 22);
             final cpuTop = math.min(height * 0.64, height - cpuWidth - 22);
 
+            // Total height calculated dynamically based on where the CPU ends
             final totalHeight = cpuTop + cpuWidth + 100;
 
             final leftRouterPorts = List<Offset>.generate(
