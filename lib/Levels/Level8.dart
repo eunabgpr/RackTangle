@@ -20,17 +20,29 @@ class _Level8ScreenState extends State<Level8Screen> {
   static const double _buttonSize = 40;
   static const double _buttonRadius = 10;
   static const double _buttonOuterPadding = 10;
+  static const double _portTouchSize = 44;
 
   static const List<double> _switchPortX = [
-    0.16,
-    0.50,
-    0.84,
-    0.16,
-    0.50,
-    0.84,
+    0.12,
+    0.38,
+    0.62,
+    0.88,
+    0.12,
+    0.38,
+    0.62,
+    0.88,
   ];
 
-  static const List<double> _switchPortY = [0.40, 0.40, 0.40, 0.60, 0.60, 0.60];
+  static const List<double> _switchPortY = [
+    0.40,
+    0.40,
+    0.40,
+    0.40,
+    0.60,
+    0.60,
+    0.60,
+    0.60,
+  ];
 
   static const List<double> _leftSwitchPortX = [
     0.22,
@@ -733,7 +745,7 @@ class _Level8ScreenState extends State<Level8Screen> {
             final leftCpuLeft = math.max(4.0, (width / 2) - cpuWidth - 22);
             final rightCpuLeft =
                 math.min(width - cpuWidth - 4.0, (width / 2) + 22);
-            final cpuTop = math.min(height * 0.64, height - cpuWidth - 22);
+            final cpuTop = math.min(height * 0.69, height - cpuWidth - 22);
 
             final leftRouterPorts = List<Offset>.generate(
               _leftSwitchPortX.length,
@@ -874,7 +886,7 @@ class _Level8ScreenState extends State<Level8Screen> {
                       width: topRouterWidth),
                 ),
                 Positioned(
-                  top: topRouterTop - 34,
+                  top: topRouterTop - 5,
                   left: (width * 0.41),
                   child: const _UnitLabel(text: 'Router'),
                 ),
@@ -885,8 +897,8 @@ class _Level8ScreenState extends State<Level8Screen> {
                       width: switchWidth),
                 ),
                 Positioned(
-                  top: switchTop - 34,
-                  left: (width * 0.42),
+                  top: switchTop + 75,
+                  left: (width * 0.75),
                   child: const _UnitLabel(text: 'Switch'),
                 ),
                 Positioned(
@@ -902,8 +914,8 @@ class _Level8ScreenState extends State<Level8Screen> {
                       width: cpuWidth),
                 ),
                 Positioned(
-                  top: cpuTop - 28,
-                  left: (width * 0.44),
+                  top: cpuTop + 55,
+                  left: (width * 0.43),
                   child: const _UnitLabel(text: 'CPU'),
                 ),
                 Positioned.fill(
@@ -988,10 +1000,8 @@ class _Level8ScreenState extends State<Level8Screen> {
                     color: _wireColors[wire],
                     onPanStart: (details) => _onWireDragStart(wire, details),
                     onPanUpdate: (details) => _onWireDragUpdate(wire, details),
-                    onPanEnd: (_) => _onWireDragEnd(
-                        wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
-                    onPanCancel: () => _onWireDragEnd(
-                        wire, wire < 4 ? leftCpuPorts : rightCpuPorts),
+                    onPanEnd: (_) => _onWireDragEnd(wire, switchPorts),
+                    onPanCancel: () => _onWireDragEnd(wire, switchPorts),
                   ),
 
                 // Draggable CPU endpoints
@@ -1074,15 +1084,24 @@ class _Level8ScreenState extends State<Level8Screen> {
 
   Widget _ghostPort(Offset p) {
     return Positioned(
-      left: p.dx - 8,
-      top: p.dy - 8,
-      child: Container(
-        width: 16,
-        height: 16,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-          border: Border.all(color: const Color(0xFFD0D0D0), width: 2),
+      left: p.dx - (_portTouchSize / 2),
+      top: p.dy - (_portTouchSize / 2),
+      child: Semantics(
+        label: 'Port',
+        child: SizedBox(
+          width: _portTouchSize,
+          height: _portTouchSize,
+          child: Center(
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(color: const Color(0xFFD0D0D0), width: 2),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1090,15 +1109,24 @@ class _Level8ScreenState extends State<Level8Screen> {
 
   Widget _switchPort(Offset p) {
     return Positioned(
-      left: p.dx - 10,
-      top: p.dy - 10,
-      child: Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-          border: Border.all(color: const Color(0xFFE9ECF4), width: 3),
+      left: p.dx - (_portTouchSize / 2),
+      top: p.dy - (_portTouchSize / 2),
+      child: Semantics(
+        label: 'Switch port',
+        child: SizedBox(
+          width: _portTouchSize,
+          height: _portTouchSize,
+          child: Center(
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(color: const Color(0xFFE9ECF4), width: 3),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1113,20 +1141,30 @@ class _Level8ScreenState extends State<Level8Screen> {
     required VoidCallback onPanCancel,
   }) {
     return Positioned(
-      left: position.dx - 11,
-      top: position.dy - 11,
-      child: GestureDetector(
-        onPanStart: onPanStart,
-        onPanUpdate: onPanUpdate,
-        onPanEnd: onPanEnd,
-        onPanCancel: onPanCancel,
-        child: Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.black54, width: 2),
+      left: position.dx - (_portTouchSize / 2),
+      top: position.dy - (_portTouchSize / 2),
+      child: Semantics(
+        label: 'Draggable port',
+        child: SizedBox(
+          width: _portTouchSize,
+          height: _portTouchSize,
+          child: Center(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onPanStart: onPanStart,
+              onPanUpdate: onPanUpdate,
+              onPanEnd: onPanEnd,
+              onPanCancel: onPanCancel,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black54, width: 2),
+                ),
+              ),
+            ),
           ),
         ),
       ),

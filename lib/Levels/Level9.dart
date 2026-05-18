@@ -20,17 +20,35 @@ class _Level9ScreenState extends State<Level9Screen> {
   static const double _buttonSize = 40;
   static const double _buttonRadius = 10;
   static const double _buttonOuterPadding = 10;
+  static const double _portTouchSize = 44;
+
+  static const List<double> _leftIspPortX = [0.99];
+  static const List<double> _leftIspPortY = [1.60];
+
+  static const List<double> _rightIspPortX = [0.99];
+  static const List<double> _rightIspPortY = [1.60];
 
   static const List<double> _switchPortX = [
-    0.16,
-    0.50,
-    0.84,
-    0.16,
-    0.50,
-    0.84,
+    0.12,
+    0.38,
+    0.62,
+    0.88,
+    0.12,
+    0.38,
+    0.62,
+    0.88,
   ];
 
-  static const List<double> _switchPortY = [0.40, 0.40, 0.40, 0.60, 0.60, 0.60];
+  static const List<double> _switchPortY = [
+    0.40,
+    0.40,
+    0.40,
+    0.40,
+    0.60,
+    0.60,
+    0.60,
+    0.60,
+  ];
 
   static const List<double> _leftSwitchPortX = [
     0.22,
@@ -68,6 +86,8 @@ class _Level9ScreenState extends State<Level9Screen> {
     Color(0xFFB24DFF),
     Color(0xFFFF1ED2),
     Colors.orangeAccent,
+    Color(0xFF00D1FF),
+    Color(0xFFFFC857),
   ];
 
   final GlobalKey _stackKey = GlobalKey();
@@ -83,6 +103,10 @@ class _Level9ScreenState extends State<Level9Screen> {
   // 6 cpu to cpu, draggable on both CPUs.
   List<int> _cpuLeftPortByWire = [2];
   List<int> _cpuRightPortByWire = [2];
+
+  // 7-8 ISP to modem, draggable on the modem side.
+  List<int> _ispLeftToRightModemPort = [3];
+  List<int> _ispRightToLeftModemPort = [1];
 
   // Router-to-switch and switch-to-CPU endpoints.
   List<int> _routerEndLeftSwitchPort = [0];
@@ -174,6 +198,8 @@ class _Level9ScreenState extends State<Level9Screen> {
       _switchStartPortByWire = [2, 3, 4, 5];
       _cpuLeftPortByWire = [2];
       _cpuRightPortByWire = [2];
+      _ispLeftToRightModemPort = [3];
+      _ispRightToLeftModemPort = [1];
       _routerEndLeftSwitchPort = [0];
       _routerEndRightSwitchPort = [1];
       _switchToLeftCpuEndPort = [0, 1];
@@ -379,7 +405,7 @@ class _Level9ScreenState extends State<Level9Screen> {
                     const SizedBox(width: 12),
                     const Expanded(
                       child: _StatCard(
-                        value: '6',
+                        value: '9',
                         label: 'Cables',
                       ),
                     ),
@@ -549,6 +575,26 @@ class _Level9ScreenState extends State<Level9Screen> {
         return;
       }
       _cpuRightPortByWire[0] = targetPort;
+      setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
+      return;
+    }
+
+    if (wireIndex == 7) {
+      if (_ispLeftToRightModemPort[0] == targetPort) {
+        return;
+      }
+      _ispLeftToRightModemPort[0] = targetPort;
+      setState(() {});
+      unawaited(_playSfx('sfx_attach.wav'));
+      return;
+    }
+
+    if (wireIndex == 8) {
+      if (_ispRightToLeftModemPort[0] == targetPort) {
+        return;
+      }
+      _ispRightToLeftModemPort[0] = targetPort;
       setState(() {});
       unawaited(_playSfx('sfx_attach.wav'));
     }
@@ -767,11 +813,23 @@ class _Level9ScreenState extends State<Level9Screen> {
                 (i) => Offset(
                     topRouterRight + (topRouterWidth * _rightSwitchPortX[i]),
                     topRouterTop + (topRouterWidth * _rightSwitchPortY[i])));
+            final leftIspPorts = List<Offset>.generate(
+                _leftIspPortX.length,
+                (i) => Offset(topRouterLeft + (ispWidth * _leftIspPortX[i]),
+                    ispTop + (ispWidth * _leftIspPortY[i])));
+            final rightIspPorts = List<Offset>.generate(
+                _rightIspPortX.length,
+                (i) => Offset(topRouterRight + (ispWidth * _rightIspPortX[i]),
+                    ispTop + (ispWidth * _rightIspPortY[i])));
             final switchPorts = List<Offset>.generate(
                 _switchPortX.length,
                 (i) => Offset(switchLeft + (switchWidth * _switchPortX[i]),
                     switchTop + (switchWidth * _switchPortY[i])));
             final routerPorts = <Offset>[
+              ...leftRouterPorts,
+              ...rightRouterPorts
+            ];
+            final modemPorts = <Offset>[
               ...leftRouterPorts,
               ...rightRouterPorts
             ];
@@ -789,7 +847,9 @@ class _Level9ScreenState extends State<Level9Screen> {
               routerPorts[_routerPortByWire[1]],
               ..._switchStartPortByWire
                   .map((portIndex) => switchPorts[portIndex]),
-              leftCpuPorts[_cpuLeftPortByWire[0]]
+              leftCpuPorts[_cpuLeftPortByWire[0]],
+              leftIspPorts[0],
+              rightIspPorts[0]
             ];
             final ends = <Offset>[
               switchPorts[_routerEndLeftSwitchPort[0]],
@@ -798,7 +858,9 @@ class _Level9ScreenState extends State<Level9Screen> {
               leftCpuPorts[_switchToLeftCpuEndPort[1]],
               rightCpuPorts[_switchToRightCpuEndPort[0]],
               rightCpuPorts[_switchToRightCpuEndPort[1]],
-              rightCpuPorts[_cpuRightPortByWire[0]]
+              rightCpuPorts[_cpuRightPortByWire[0]],
+              modemPorts[_ispLeftToRightModemPort[0]],
+              modemPorts[_ispRightToLeftModemPort[0]]
             ];
 
             if (_draggingWire != null && _dragPosition != null) {
@@ -887,7 +949,7 @@ class _Level9ScreenState extends State<Level9Screen> {
                                     width: ispWidth),
                               ),
                               Positioned(
-                                top: math.max(ispTop - 34, 12),
+                                top: math.max(ispTop + 50, 12),
                                 left: 0,
                                 right: 0,
                                 child: Align(
@@ -908,7 +970,7 @@ class _Level9ScreenState extends State<Level9Screen> {
                                     width: topRouterWidth),
                               ),
                               Positioned(
-                                top: topRouterTop - 34,
+                                top: topRouterTop + 115,
                                 left: (width * 0.41),
                                 child: const _UnitLabel(text: 'Router'),
                               ),
@@ -919,8 +981,8 @@ class _Level9ScreenState extends State<Level9Screen> {
                                     width: switchWidth),
                               ),
                               Positioned(
-                                top: switchTop - 34,
-                                left: (width * 0.42),
+                                top: switchTop + 80,
+                                left: (width * 0.75),
                                 child: const _UnitLabel(text: 'Switch'),
                               ),
                               Positioned(
@@ -936,8 +998,8 @@ class _Level9ScreenState extends State<Level9Screen> {
                                     width: cpuWidth),
                               ),
                               Positioned(
-                                top: cpuTop - 28,
-                                left: (width * 0.44),
+                                top: cpuTop - 10,
+                                left: (width * 0.60),
                                 child: const _UnitLabel(text: 'CPU'),
                               ),
                               Positioned.fill(
@@ -955,6 +1017,10 @@ class _Level9ScreenState extends State<Level9Screen> {
                                 _ghostPort(leftRouterPorts[i]),
                               for (var i = 0; i < rightRouterPorts.length; i++)
                                 _ghostPort(rightRouterPorts[i]),
+                              for (var i = 0; i < leftIspPorts.length; i++)
+                                _ghostPort(leftIspPorts[i]),
+                              for (var i = 0; i < rightIspPorts.length; i++)
+                                _ghostPort(rightIspPorts[i]),
                               for (var i = 0; i < leftCpuPorts.length; i++)
                                 _ghostPort(leftCpuPorts[i]),
                               for (var i = 0; i < rightCpuPorts.length; i++)
@@ -1036,10 +1102,10 @@ class _Level9ScreenState extends State<Level9Screen> {
                                       _onWireDragStart(wire, details),
                                   onPanUpdate: (details) =>
                                       _onWireDragUpdate(wire, details),
-                                  onPanEnd: (_) => _onWireDragEnd(wire,
-                                      wire < 4 ? leftCpuPorts : rightCpuPorts),
-                                  onPanCancel: () => _onWireDragEnd(wire,
-                                      wire < 4 ? leftCpuPorts : rightCpuPorts),
+                                  onPanEnd: (_) =>
+                                      _onWireDragEnd(wire, switchPorts),
+                                  onPanCancel: () =>
+                                      _onWireDragEnd(wire, switchPorts),
                                 ),
 
                               // Draggable CPU endpoints
@@ -1096,19 +1162,69 @@ class _Level9ScreenState extends State<Level9Screen> {
                                     6, rightCpuPorts,
                                     dragEnd: true),
                               ),
+                              _dragHandle(
+                                position: ends[7],
+                                color: _wireColors[7],
+                                onPanStart: (details) =>
+                                    _onWireDragStart(7, details, dragEnd: true),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(7, details),
+                                onPanEnd: (_) => _onWireDragEnd(7, modemPorts,
+                                    dragEnd: true),
+                                onPanCancel: () => _onWireDragEnd(7, modemPorts,
+                                    dragEnd: true),
+                              ),
+                              _dragHandle(
+                                position: starts[7],
+                                color: _wireColors[7],
+                                onPanStart: (details) =>
+                                    _onWireDragStart(7, details),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(7, details),
+                                onPanEnd: (_) =>
+                                    _onWireDragEnd(7, leftIspPorts),
+                                onPanCancel: () =>
+                                    _onWireDragEnd(7, leftIspPorts),
+                              ),
+                              _dragHandle(
+                                position: ends[8],
+                                color: _wireColors[8],
+                                onPanStart: (details) =>
+                                    _onWireDragStart(8, details, dragEnd: true),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(8, details),
+                                onPanEnd: (_) => _onWireDragEnd(8, modemPorts,
+                                    dragEnd: true),
+                                onPanCancel: () => _onWireDragEnd(8, modemPorts,
+                                    dragEnd: true),
+                              ),
+                              _dragHandle(
+                                position: starts[8],
+                                color: _wireColors[8],
+                                onPanStart: (details) =>
+                                    _onWireDragStart(8, details),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(8, details),
+                                onPanEnd: (_) =>
+                                    _onWireDragEnd(8, rightIspPorts),
+                                onPanCancel: () =>
+                                    _onWireDragEnd(8, rightIspPorts),
+                              ),
 
-                              for (var wire = 4; wire < 7; wire++)
+                              for (var wire = 4; wire < 9; wire++)
                                 Positioned(
                                   left: ends[wire].dx - 10,
                                   top: ends[wire].dy - 10,
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: _wireColors[wire],
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: Colors.black54, width: 2),
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: _wireColors[wire],
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: Colors.black54, width: 2),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1142,15 +1258,24 @@ class _Level9ScreenState extends State<Level9Screen> {
 
   Widget _ghostPort(Offset p) {
     return Positioned(
-      left: p.dx - 8,
-      top: p.dy - 8,
-      child: Container(
-        width: 16,
-        height: 16,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-          border: Border.all(color: const Color(0xFFD0D0D0), width: 2),
+      left: p.dx - (_portTouchSize / 2),
+      top: p.dy - (_portTouchSize / 2),
+      child: Semantics(
+        label: 'Port',
+        child: SizedBox(
+          width: _portTouchSize,
+          height: _portTouchSize,
+          child: Center(
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(color: const Color(0xFFD0D0D0), width: 2),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1158,15 +1283,24 @@ class _Level9ScreenState extends State<Level9Screen> {
 
   Widget _switchPort(Offset p) {
     return Positioned(
-      left: p.dx - 10,
-      top: p.dy - 10,
-      child: Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.transparent,
-          border: Border.all(color: const Color(0xFFE9ECF4), width: 3),
+      left: p.dx - (_portTouchSize / 2),
+      top: p.dy - (_portTouchSize / 2),
+      child: Semantics(
+        label: 'Switch port',
+        child: SizedBox(
+          width: _portTouchSize,
+          height: _portTouchSize,
+          child: Center(
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(color: const Color(0xFFE9ECF4), width: 3),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1181,20 +1315,30 @@ class _Level9ScreenState extends State<Level9Screen> {
     required VoidCallback onPanCancel,
   }) {
     return Positioned(
-      left: position.dx - 11,
-      top: position.dy - 11,
-      child: GestureDetector(
-        onPanStart: onPanStart,
-        onPanUpdate: onPanUpdate,
-        onPanEnd: onPanEnd,
-        onPanCancel: onPanCancel,
-        child: Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.black54, width: 2),
+      left: position.dx - (_portTouchSize / 2),
+      top: position.dy - (_portTouchSize / 2),
+      child: Semantics(
+        label: 'Draggable port',
+        child: SizedBox(
+          width: _portTouchSize,
+          height: _portTouchSize,
+          child: Center(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onPanStart: onPanStart,
+              onPanUpdate: onPanUpdate,
+              onPanEnd: onPanEnd,
+              onPanCancel: onPanCancel,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black54, width: 2),
+                ),
+              ),
+            ),
           ),
         ),
       ),
