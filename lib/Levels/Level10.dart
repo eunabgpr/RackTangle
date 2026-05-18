@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:racktangle/services/bgm_service.dart';
 
 class Level10Screen extends StatefulWidget {
   const Level10Screen({super.key});
@@ -12,6 +15,17 @@ class _Level10ScreenState extends State<Level10Screen> {
   static const Color _backgroundColor = Color(0xFF171725);
 
   final AudioPlayer _sfxPlayer = AudioPlayer();
+  final BgmService _bgmService = BgmService();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_playGameplayBgm());
+  }
+
+  Future<void> _playGameplayBgm() async {
+    await _bgmService.playBgm('bgm_gameplay.mp3');
+  }
 
   @override
   void dispose() {

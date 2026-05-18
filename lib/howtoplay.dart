@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:racktangle/services/bgm_service.dart';
 
 class HowToPlayScreen extends StatefulWidget {
   const HowToPlayScreen({super.key});
@@ -10,6 +13,17 @@ class HowToPlayScreen extends StatefulWidget {
 
 class _HowToPlayScreenState extends State<HowToPlayScreen> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
+  final BgmService _bgmService = BgmService();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_playMenuBgm());
+  }
+
+  Future<void> _playMenuBgm() async {
+    await _bgmService.playBgm('bgm_menu.mp3');
+  }
 
   @override
   void dispose() {

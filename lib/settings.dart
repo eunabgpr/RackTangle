@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:racktangle/services/bgm_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,6 +12,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
+  final BgmService _bgmService = BgmService();
 
   bool _backgroundMusicEnabled = true;
   bool _soundEffectsEnabled = true;
@@ -28,6 +31,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const Color _dangerColor = Color(0xFFB00020);
 
   @override
+  void initState() {
+    super.initState();
+    _backgroundMusicEnabled = _bgmService.bgmEnabled;
+  }
+
+  @override
   void dispose() {
     _sfxPlayer.dispose();
     super.dispose();
@@ -43,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _backgroundMusicEnabled = value;
     });
+    unawaited(_bgmService.setBgmEnabled(value));
   }
 
   void _toggleSoundEffects(bool value) {

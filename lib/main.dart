@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:racktangle/Levels/Level1.dart';
 import 'package:racktangle/howtoplay.dart';
 import 'package:racktangle/settings.dart';
+import 'package:racktangle/services/bgm_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final bgmService = BgmService();
+  await bgmService.initialize();
   runApp(const RacktangleApp());
 }
 
@@ -40,6 +46,16 @@ class _HomeScreenState extends State<HomeScreen> {
   static const double _gapCircuitsToRack = 2;
   static const double _gapRackToTangle = 8;
   static const double _gapTangleToUntangle = 24;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_playMenuBgm());
+  }
+
+  Future<void> _playMenuBgm() async {
+    await BgmService().playBgm('bgm_menu.mp3');
+  }
 
   @override
   void dispose() {

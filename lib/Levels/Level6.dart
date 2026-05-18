@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:racktangle/Levels/Level7.dart';
+import 'package:racktangle/services/bgm_service.dart';
 
 class Level6Screen extends StatefulWidget {
   const Level6Screen({super.key});
@@ -75,6 +76,7 @@ class _Level6ScreenState extends State<Level6Screen> {
 
   final GlobalKey _stackKey = GlobalKey();
   final AudioPlayer _sfxPlayer = AudioPlayer();
+  final BgmService _bgmService = BgmService();
 
   // 0-1 router to switches, draggable on router.
   // Blue (wire 0) starts on right; green (wire 1) starts on left.
@@ -108,6 +110,11 @@ class _Level6ScreenState extends State<Level6Screen> {
   void initState() {
     super.initState();
     _isPaused = true;
+    unawaited(_playGameplayBgm());
+  }
+
+  Future<void> _playGameplayBgm() async {
+    await _bgmService.playBgm('bgm_gameplay.mp3');
   }
 
   @override
