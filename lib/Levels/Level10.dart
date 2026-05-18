@@ -87,6 +87,8 @@ class _Level10ScreenState extends State<Level10Screen> {
     Colors.orangeAccent,
     Color(0xFF00D1FF),
     Color(0xFFFFC857),
+    Color(0xFFFFB347),
+    Color(0xFF4DB1FF),
   ];
 
   final GlobalKey _stackKey = GlobalKey();
@@ -97,15 +99,22 @@ class _Level10ScreenState extends State<Level10Screen> {
   List<int> _routerPortByWire = [1, 4];
 
   // 2-5 middle switch, draggable on the switch.
-  List<int> _switchStartPortByWire = [2, 3, 4, 5];
+  List<int> _switchStartPortByWire = [0, 1, 2, 3];
 
   // 6 cpu to cpu, draggable on both CPUs.
-  List<int> _cpuLeftPortByWire = [2];
-  List<int> _cpuRightPortByWire = [2];
+  List<int> _cpuLeftPortByWire = [1];
+  List<int> _cpuRightPortByWire = [1];
 
   // 7-8 ISP to modem, draggable on the modem side.
   List<int> _ispLeftToRightModemPort = [3];
   List<int> _ispRightToLeftModemPort = [1];
+
+  // 9 orange modem-to-switch, draggable on the switch side.
+  List<int> _orangeSwitchPortByWire = [0];
+
+  // 10 blue switch-to-left-cpu, draggable on both ends.
+  List<int> _blueSwitchPortByWire = [4];
+  List<int> _blueLeftCpuPortByWire = [0];
 
   // Router-to-switch and switch-to-CPU endpoints.
   List<int> _routerEndLeftSwitchPort = [0];
@@ -194,11 +203,14 @@ class _Level10ScreenState extends State<Level10Screen> {
   void _resetLevel() {
     setState(() {
       _routerPortByWire = [1, 4];
-      _switchStartPortByWire = [2, 3, 4, 5];
-      _cpuLeftPortByWire = [2];
-      _cpuRightPortByWire = [2];
+      _switchStartPortByWire = [0, 1, 2, 3];
+      _cpuLeftPortByWire = [1];
+      _cpuRightPortByWire = [1];
       _ispLeftToRightModemPort = [3];
       _ispRightToLeftModemPort = [1];
+      _orangeSwitchPortByWire = [0];
+      _blueSwitchPortByWire = [4];
+      _blueLeftCpuPortByWire = [0];
       _routerEndLeftSwitchPort = [0];
       _routerEndRightSwitchPort = [1];
       _switchToLeftCpuEndPort = [0, 1];
@@ -249,7 +261,7 @@ class _Level10ScreenState extends State<Level10Screen> {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'LEVEL 9',
+                  'LEVEL 10',
                   style: TextStyle(
                     color: Color(0xFF8A90A8),
                     fontSize: 28,
@@ -376,7 +388,7 @@ class _Level10ScreenState extends State<Level10Screen> {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'LEVEL 9',
+                  'LEVEL 10',
                   style: TextStyle(
                     color: Color(0xFF8A90A8),
                     fontSize: 28,
@@ -411,19 +423,6 @@ class _Level10ScreenState extends State<Level10Screen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _dialogButton(
-                  text: 'Next Level',
-                  onPressed: () {
-                    unawaited(_playSfx('sfx_button.ogg'));
-                    Navigator.of(dialogContext).pop();
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const Level10Screen(),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
                 _dialogButton(
                   text: 'Back to home',
                   onPressed: () {
@@ -724,7 +723,7 @@ class _Level10ScreenState extends State<Level10Screen> {
           ),
         ),
         title: const Text(
-          'Level 9',
+          'Level 10',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -762,8 +761,7 @@ class _Level10ScreenState extends State<Level10Screen> {
           builder: (context, constraints) {
             // 1. Screen size variables
             final width = constraints.maxWidth;
-            final height =
-                800.0; // Level 9 uses a fixed scrollable canvas height of 800
+            final height = 800.0;
 
             // 2. Component Widths (Keep these or tweak based on your new image sizes)
             final topRouterWidth = math.min(width * 0.40, 132.0);
@@ -791,10 +789,12 @@ class _Level10ScreenState extends State<Level10Screen> {
                 math.min(width - topRouterWidth - 8.0, (width / 2) + 24);
 
             // 6. Switch & CPU Positioning (Kept intact as they already use math bounds)
-            final switchLeft = (width - switchWidth) / 2;
+            const switchLeftOffset = -90.0;
+            const secondarySwitchLeftOffset = 0.0;
+            final switchLeft = ((width - switchWidth) / 2) + switchLeftOffset;
             final switchTop = math.min(height * 0.37, 320.0);
-            final secondarySwitchLeft = math.min(
-              width - switchWidth - 8.0, switchLeft + switchWidth + 18.0);
+            final secondarySwitchLeft = math.min(width - switchWidth - 8.0,
+                switchLeft + switchWidth + 18.0 + secondarySwitchLeftOffset);
             final secondarySwitchTop = switchTop;
 
             final leftCpuLeft = math.max(4.0, (width / 2) - cpuWidth - 22);
@@ -824,15 +824,18 @@ class _Level10ScreenState extends State<Level10Screen> {
                 (i) => Offset(topRouterRight + (ispWidth * _rightIspPortX[i]),
                     ispTop + (ispWidth * _rightIspPortY[i])));
             final leftSwitchPorts = List<Offset>.generate(
-              _switchPortX.length,
-              (i) => Offset(switchLeft + (switchWidth * _switchPortX[i]),
-                switchTop + (switchWidth * _switchPortY[i])));
+                _switchPortX.length,
+                (i) => Offset(switchLeft + (switchWidth * _switchPortX[i]),
+                    switchTop + (switchWidth * _switchPortY[i])));
             final rightSwitchPorts = List<Offset>.generate(
-              _switchPortX.length,
-              (i) => Offset(
-                secondarySwitchLeft + (switchWidth * _switchPortX[i]),
-                secondarySwitchTop + (switchWidth * _switchPortY[i])));
-            final switchPorts = <Offset>[...leftSwitchPorts, ...rightSwitchPorts];
+                _switchPortX.length,
+                (i) => Offset(
+                    secondarySwitchLeft + (switchWidth * _switchPortX[i]),
+                    secondarySwitchTop + (switchWidth * _switchPortY[i])));
+            final switchPorts = <Offset>[
+              ...leftSwitchPorts,
+              ...rightSwitchPorts
+            ];
             final routerPorts = <Offset>[
               ...leftRouterPorts,
               ...rightRouterPorts
@@ -857,7 +860,9 @@ class _Level10ScreenState extends State<Level10Screen> {
                   .map((portIndex) => switchPorts[portIndex]),
               leftCpuPorts[_cpuLeftPortByWire[0]],
               leftIspPorts[0],
-              rightIspPorts[0]
+              rightIspPorts[0],
+              leftRouterPorts[0],
+              switchPorts[_blueSwitchPortByWire[0]]
             ];
             final ends = <Offset>[
               switchPorts[_routerEndLeftSwitchPort[0]],
@@ -868,7 +873,9 @@ class _Level10ScreenState extends State<Level10Screen> {
               rightCpuPorts[_switchToRightCpuEndPort[1]],
               rightCpuPorts[_cpuRightPortByWire[0]],
               modemPorts[_ispLeftToRightModemPort[0]],
-              modemPorts[_ispRightToLeftModemPort[0]]
+              modemPorts[_ispRightToLeftModemPort[0]],
+              switchPorts[_orangeSwitchPortByWire[0]],
+              leftCpuPorts[_blueLeftCpuPortByWire[0]]
             ];
 
             if (_draggingWire != null && _dragPosition != null) {
@@ -995,13 +1002,9 @@ class _Level10ScreenState extends State<Level10Screen> {
                                     width: switchWidth),
                               ),
                               Positioned(
-                                top: switchTop + 80,
-                                left: (width * 0.75),
-                                child: const _UnitLabel(text: 'Switch'),
-                              ),
-                              Positioned(
-                                top: secondarySwitchTop + 80,
-                                left: secondarySwitchLeft + (switchWidth * 0.12),
+                                top: secondarySwitchTop + 140,
+                                left:
+                                    secondarySwitchLeft + (switchWidth * -0.26),
                                 child: const _UnitLabel(text: 'Switch'),
                               ),
                               Positioned(
@@ -1018,7 +1021,7 @@ class _Level10ScreenState extends State<Level10Screen> {
                               ),
                               Positioned(
                                 top: cpuTop - 10,
-                                left: (width * 0.60),
+                                left: (width * 0.43),
                                 child: const _UnitLabel(text: 'CPU'),
                               ),
                               Positioned.fill(
@@ -1048,6 +1051,59 @@ class _Level10ScreenState extends State<Level10Screen> {
                                 _switchPort(leftSwitchPorts[i]),
                               for (var i = 0; i < rightSwitchPorts.length; i++)
                                 _switchPort(rightSwitchPorts[i]),
+
+                              _dragHandle(
+                                position: starts[9],
+                                color: _wireColors[9],
+                                onPanStart: (details) =>
+                                    _onWireDragStart(9, details),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(9, details),
+                                onPanEnd: (_) =>
+                                    _onWireDragEnd(9, leftRouterPorts),
+                                onPanCancel: () =>
+                                    _onWireDragEnd(9, leftRouterPorts),
+                              ),
+                              _dragHandle(
+                                position: ends[9],
+                                color: _wireColors[9],
+                                onPanStart: (details) =>
+                                    _onWireDragStart(9, details, dragEnd: true),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(9, details),
+                                onPanEnd: (_) => _onWireDragEnd(9, switchPorts,
+                                    dragEnd: true),
+                                onPanCancel: () => _onWireDragEnd(
+                                    9, switchPorts,
+                                    dragEnd: true),
+                              ),
+                              _dragHandle(
+                                position: starts[10],
+                                color: _wireColors[10],
+                                onPanStart: (details) =>
+                                    _onWireDragStart(10, details),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(10, details),
+                                onPanEnd: (_) =>
+                                    _onWireDragEnd(10, switchPorts),
+                                onPanCancel: () =>
+                                    _onWireDragEnd(10, switchPorts),
+                              ),
+                              _dragHandle(
+                                position: ends[10],
+                                color: _wireColors[10],
+                                onPanStart: (details) => _onWireDragStart(
+                                    10, details,
+                                    dragEnd: true),
+                                onPanUpdate: (details) =>
+                                    _onWireDragUpdate(10, details),
+                                onPanEnd: (_) => _onWireDragEnd(
+                                    10, leftCpuPorts,
+                                    dragEnd: true),
+                                onPanCancel: () => _onWireDragEnd(
+                                    10, leftCpuPorts,
+                                    dragEnd: true),
+                              ),
 
                               // Draggable endpoints for the router pair.
                               _dragHandle(
@@ -1261,7 +1317,7 @@ class _Level10ScreenState extends State<Level10Screen> {
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 24),
-                              child: _Level9LearningCard(
+                              child: _Level10LearningCard(
                                   onReady: _startLevelFromLearningCard),
                             ),
                           ),
@@ -1461,8 +1517,8 @@ class _WirePainter extends CustomPainter {
   }
 }
 
-class _Level9LearningCard extends StatelessWidget {
-  const _Level9LearningCard({required this.onReady});
+class _Level10LearningCard extends StatelessWidget {
+  const _Level10LearningCard({required this.onReady});
 
   final VoidCallback onReady;
 
@@ -1498,7 +1554,7 @@ class _Level9LearningCard extends StatelessWidget {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'ISP Redundancy',
+                  'High Availability',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -1508,7 +1564,7 @@ class _Level9LearningCard extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  'Level 9 - Dual Internet',
+                  'Level 10 - The Mesh',
                   style: TextStyle(
                     color: Color(0xFFE0FFFA),
                     fontSize: 20,
@@ -1531,13 +1587,13 @@ class _Level9LearningCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _pill('Levels 7-9', const Color(0xFF1A2D5A), true),
+                      child: _pill('Level 10', const Color(0xFF1A2D5A), true),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  '- Level 9 - Concept',
+                  '- Level 10 - Concept',
                   style: TextStyle(
                     color: Color(0xFF29D9C0),
                     fontSize: 14,
@@ -1559,7 +1615,7 @@ class _Level9LearningCard extends StatelessWidget {
                           color: Color(0xFF0BBFA7), size: 34),
                       SizedBox(height: 8),
                       Text(
-                        'DUAL ISP CONNECTION',
+                        'MESH TOPOLOGY',
                         style: TextStyle(
                           color: Color(0xFF0BBFA7),
                           fontWeight: FontWeight.w800,
@@ -1570,10 +1626,10 @@ class _Level9LearningCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                _pill('Connecting the World"', const Color(0xFF1E2E58), true),
+                _pill('Full Mesh Network', const Color(0xFF1E2E58), true),
                 const SizedBox(height: 12),
                 const Text(
-                  'Even with a perfect internal network, your Internet Service Provider (ISP) can fail. Businesses often pay for two different internet connections - sometimes one fiver-optic and one satellite - so if one provider has an outage, the whole company stays online.',
+                  'In a mesh topology, every critical device has multiple paths to reach the others. If one cable or switch fails, traffic can reroute through a different route, so the network stays online and services remain available.',
                   style: TextStyle(
                     color: Color(0xFFC8D5FF),
                     fontSize: 12,
@@ -1592,7 +1648,7 @@ class _Level9LearningCard extends StatelessWidget {
                     border: Border.all(color: const Color(0xFF584E70)),
                   ),
                   child: const Text(
-                    'FUN FACT\nMost of the world\'s internet travels through massive cables at the bottom of the ocean. - not through satellites!',
+                    'FUN FACT\nA full mesh with 10 devices needs 45 cables to connect every device to every other device.',
                     style: TextStyle(
                       color: Color(0xFFC5B7DF),
                       fontSize: 12,

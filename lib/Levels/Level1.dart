@@ -53,12 +53,12 @@ class _Level1ScreenState extends State<Level1Screen> {
   bool _showingClearDialog = false;
   bool _isPaused = false;
   int _currentCrossingCount = 0;
+  bool _showPrePlayModule = true;
 
   @override
   void initState() {
     super.initState();
-    _isPaused = false;
-    _startTimer();
+    _isPaused = true;
 
     unawaited(
       BgmService().setBgm('bgm_gameplay.mp3'),
@@ -106,17 +106,29 @@ class _Level1ScreenState extends State<Level1Screen> {
     _startTimer();
   }
 
+  void _startLevelFromLearningCard() {
+    if (!_showPrePlayModule) {
+      return;
+    }
+    unawaited(_playSfx('sfx_button.ogg'));
+    setState(() {
+      _showPrePlayModule = false;
+      _isPaused = false;
+    });
+    _startTimer();
+  }
+
   void _resetLevel() {
     setState(() {
       _modemPortByWire = [0, 2];
       _draggingWire = null;
       _dragPosition = null;
       _elapsedSeconds = 0;
-      _isPaused = false;
+      _isPaused = true;
       _levelCleared = false;
       _showingClearDialog = false;
+      _showPrePlayModule = true;
     });
-    _startTimer();
   }
 
   String _formatTime(int totalSeconds) {
@@ -812,6 +824,20 @@ class _Level1ScreenState extends State<Level1Screen> {
                       ),
                     ),
                   ),
+                if (_showPrePlayModule)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black38,
+                      alignment: Alignment.center,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 24,
+                        ),
+                        child: const _Level1LearningCard(),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -911,5 +937,215 @@ class _WiresPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _WiresPainter oldDelegate) {
     return oldDelegate.starts != starts || oldDelegate.ends != ends;
+  }
+}
+
+class _Level1LearningCard extends StatelessWidget {
+  const _Level1LearningCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.findAncestorStateOfType<_Level1ScreenState>();
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 360),
+      decoration: BoxDecoration(
+        color: const Color(0xFF171A34),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF3A3E66)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF6A60E9),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(17)),
+            ),
+            child: const Column(
+              children: [
+                Text(
+                  'LEARNING MODULE',
+                  style: TextStyle(
+                    color: Color(0xFFD7D5FF),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Before You Play...',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Level 1 - Router',
+                  style: TextStyle(
+                    color: Color(0xFFD7D5FF),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1D2455),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF3F4A8A)),
+                        ),
+                        child: const Text(
+                          'Levels 1-3',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF30375F)),
+                        ),
+                        child: const Text(
+                          'Levels 4-6',
+                          style: TextStyle(
+                            color: Color(0xFF7C83AB),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '• Level 1 - Concept',
+                    style: TextStyle(
+                      color: Color(0xFF8D92B7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1E3A),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF2F3561)),
+                  ),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.router, color: Color(0xFF8F84FF), size: 34),
+                      SizedBox(height: 8),
+                      Text(
+                        'ROUTER',
+                        style: TextStyle(
+                          color: Color(0xFF8F84FF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1D2142),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF30375F)),
+                  ),
+                  child: const Text(
+                    'A router helps direct information between devices. It keeps data moving along the best path so your network stays connected and organized.',
+                    style: TextStyle(
+                      color: Color(0xFF9DA4C7),
+                      fontSize: 14,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF302D3D),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF584E70)),
+                  ),
+                  child: const Text(
+                    'FUN FACT\nDid you know routers use tables of routes to decide where each packet should go?',
+                    style: TextStyle(
+                      color: Color(0xFFC5B7DF),
+                      fontSize: 13,
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      state?._startLevelFromLearningCard();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6A60E9),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      '→ Ready to Play!',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
