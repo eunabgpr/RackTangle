@@ -2,10 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:racktangle/Levels/Level10.dart';
+import 'package:racktangle/Levels/Level2.dart';
+import 'package:racktangle/Levels/Level3.dart';
+import 'package:racktangle/Levels/Level4.dart';
+import 'package:racktangle/Levels/Level5.dart';
+import 'package:racktangle/Levels/Level6.dart';
+import 'package:racktangle/Levels/Level7.dart';
+import 'package:racktangle/Levels/Level8.dart';
+import 'package:racktangle/Levels/Level9.dart';
 import 'package:racktangle/Levels/Level1.dart';
 import 'package:racktangle/howtoplay.dart';
 import 'package:racktangle/settings.dart';
 import 'package:racktangle/services/bgm_service.dart';
+import 'package:racktangle/services/progress_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +50,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
+  final ProgressService _progressService = ProgressService();
 
   static const Color _backgroundColor = Color(0xFF171725);
   static const double _topImageOffset = 10;
@@ -63,6 +74,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _playButtonSfx() async {
     await _sfxPlayer.play(AssetSource('sfx/sfx_button.ogg'));
+  }
+
+  Widget _screenForLevel(int level) {
+    switch (level) {
+      case 1:
+        return const Level1Screen();
+      case 2:
+        return const Level2Screen();
+      case 3:
+        return const Level3Screen();
+      case 4:
+        return const Level4Screen();
+      case 5:
+        return const Level5Screen();
+      case 6:
+        return const Level6Screen();
+      case 7:
+        return const Level7Screen();
+      case 8:
+        return const Level8Screen();
+      case 9:
+        return const Level9Screen();
+      case 10:
+      default:
+        return const Level10Screen();
+    }
+  }
+
+  Future<void> _startGame() async {
+    await _playButtonSfx();
+    final unlockedLevel = await _progressService.getUnlockedLevel();
+    if (!context.mounted) {
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _screenForLevel(unlockedLevel),
+      ),
+    );
   }
 
   @override
@@ -100,17 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ElevatedButton(
-              onPressed: () async {
-                await _playButtonSfx();
-                if (!context.mounted) {
-                  return;
-                }
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (context) => const Level1Screen(),
-                  ),
-                );
-              },
+              onPressed: _startGame,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF235DB5),
                 foregroundColor: const Color.fromARGB(255, 255, 255, 255),

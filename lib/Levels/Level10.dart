@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:racktangle/services/bgm_service.dart';
+import 'package:racktangle/services/progress_service.dart';
 
 class Level10Screen extends StatefulWidget {
   const Level10Screen({super.key});
@@ -94,6 +95,7 @@ class _Level10ScreenState extends State<Level10Screen> {
   final GlobalKey _stackKey = GlobalKey();
   final AudioPlayer _sfxPlayer = AudioPlayer();
   final BgmService _bgmService = BgmService();
+  final ProgressService _progressService = ProgressService();
 
   // 0-1 top routers, draggable on either router.
   List<int> _routerPortByWire = [1, 4];
@@ -315,8 +317,9 @@ class _Level10ScreenState extends State<Level10Screen> {
                 const SizedBox(height: 12),
                 _dialogButton(
                   text: 'Back to home',
-                  onPressed: () {
+                  onPressed: () async {
                     unawaited(_playSfx('sfx_button.ogg'));
+                    await _progressService.resetProgress();
                     unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).popUntil((route) => route.isFirst);

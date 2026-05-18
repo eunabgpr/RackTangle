@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:racktangle/services/bgm_service.dart';
+import 'package:racktangle/services/progress_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,6 +14,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
   final BgmService _bgmService = BgmService();
+  final ProgressService _progressService = ProgressService();
 
   bool _backgroundMusicEnabled = true;
   bool _soundEffectsEnabled = true;
@@ -34,6 +36,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _backgroundMusicEnabled = _bgmService.bgmEnabled;
+    unawaited(_loadProgress());
     unawaited(
       BgmService().setBgm('bgm_menu.mp3'),
     );
@@ -47,6 +50,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _playButtonSfx() async {
     await _sfxPlayer.play(AssetSource('sfx/sfx_button.ogg'));
+  }
+
+  Future<void> _loadProgress() async {
+    final unlockedLevel = await _progressService.getUnlockedLevel();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _currentLevel = unlockedLevel;
+    });
   }
 
   double get _levelProgress => _currentLevel / _maxLevel;
@@ -69,11 +82,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
-  void _resetProgress() {
+  Future<void> _resetProgress() async {
     setState(() {
       _currentLevel = 1;
       _completedModules = 0;
     });
+    await _progressService.resetProgress();
   }
 
   @override
@@ -171,7 +185,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 textColor: _textColor,
                 onTap: () async {
                   await _playButtonSfx();
-                  _resetProgress();
+                  await _resetProgress();
                 },
               ),
             ],

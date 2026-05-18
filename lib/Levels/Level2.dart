@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:racktangle/Levels/Level3.dart';
 import 'package:racktangle/services/bgm_service.dart';
+import 'package:racktangle/services/progress_service.dart';
 
 class Level2Screen extends StatefulWidget {
   const Level2Screen({super.key});
@@ -40,6 +41,7 @@ class _Level2ScreenState extends State<Level2Screen> {
   final GlobalKey _stackKey = GlobalKey();
   final AudioPlayer _sfxPlayer = AudioPlayer();
   final BgmService _bgmService = BgmService();
+  final ProgressService _progressService = ProgressService();
 
   // Wire i starts at modem port _modemPortByWire[i] and ends at CPU port _cpuPortByWire[i].
   List<int> _modemPortByWire = [1, 0];
@@ -384,8 +386,9 @@ class _Level2ScreenState extends State<Level2Screen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         unawaited(_playSfx('sfx_button.ogg'));
+                        await _progressService.setUnlockedLevel(3);
                         Navigator.of(dialogContext).pop();
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute<void>(

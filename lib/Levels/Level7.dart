@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:racktangle/Levels/Level8.dart';
 import 'package:racktangle/services/bgm_service.dart';
+import 'package:racktangle/services/progress_service.dart';
 
 class Level7Screen extends StatefulWidget {
   const Level7Screen({super.key});
@@ -44,6 +45,7 @@ class _Level7ScreenState extends State<Level7Screen> {
   final GlobalKey _stackKey = GlobalKey();
   final AudioPlayer _sfxPlayer = AudioPlayer();
   final BgmService _bgmService = BgmService();
+  final ProgressService _progressService = ProgressService();
 
   // Five cables: left-side endpoint is draggable among left ports,
   // right-side endpoint is draggable among right ports.
@@ -398,8 +400,9 @@ class _Level7ScreenState extends State<Level7Screen> {
                 const SizedBox(height: 20),
                 _dialogButton(
                   text: 'Next Level',
-                  onPressed: () {
+                  onPressed: () async {
                     unawaited(_playSfx('sfx_button.ogg'));
+                    await _progressService.setUnlockedLevel(8);
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute<void>(
