@@ -20,11 +20,9 @@ class _Level10ScreenState extends State<Level10Screen> {
   @override
   void initState() {
     super.initState();
-    unawaited(_playGameplayBgm());
-  }
-
-  Future<void> _playGameplayBgm() async {
-    await _bgmService.playBgm('bgm_gameplay.mp3');
+    unawaited(
+      BgmService().setBgm('bgm_gameplay.mp3'),
+    );
   }
 
   @override
@@ -74,6 +72,7 @@ class _Level10ScreenState extends State<Level10Screen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       await _playSfx('sfx_button.ogg');
+                      unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                       if (!context.mounted) {
                         return;
                       }

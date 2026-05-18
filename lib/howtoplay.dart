@@ -13,16 +13,13 @@ class HowToPlayScreen extends StatefulWidget {
 
 class _HowToPlayScreenState extends State<HowToPlayScreen> {
   final AudioPlayer _sfxPlayer = AudioPlayer();
-  final BgmService _bgmService = BgmService();
 
   @override
   void initState() {
     super.initState();
-    unawaited(_playMenuBgm());
-  }
-
-  Future<void> _playMenuBgm() async {
-    await _bgmService.playBgm('bgm_menu.mp3');
+    unawaited(
+      BgmService().setBgm('bgm_menu.mp3'),
+    );
   }
 
   @override

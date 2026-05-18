@@ -34,6 +34,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _backgroundMusicEnabled = _bgmService.bgmEnabled;
+    unawaited(
+      BgmService().setBgm('bgm_menu.mp3'),
+    );
   }
 
   @override
@@ -48,11 +51,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   double get _levelProgress => _currentLevel / _maxLevel;
 
-  void _toggleBackgroundMusic(bool value) {
+  Future<void> _toggleBackgroundMusic(bool value) async {
     setState(() {
       _backgroundMusicEnabled = value;
     });
-    unawaited(_bgmService.setBgmEnabled(value));
+
+    await _bgmService.setBgmEnabled(value);
+
+    if (value) {
+      await _bgmService.playBgm('bgm_menu.mp3');
+    }
   }
 
   void _toggleSoundEffects(bool value) {
@@ -113,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _ToggleSettingCard(
                 label: 'Background Music',
                 value: _backgroundMusicEnabled,
-                onChanged: _toggleBackgroundMusic,
+                onChanged: (value) => _toggleBackgroundMusic(value),
                 accentColor: _accentColor,
                 panelColor: _panelColor,
                 panelBorderColor: _panelBorderColor,

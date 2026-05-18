@@ -50,11 +50,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(_playMenuBgm());
-  }
-
-  Future<void> _playMenuBgm() async {
-    await BgmService().playBgm('bgm_menu.mp3');
+    unawaited(
+      BgmService().setBgm('bgm_menu.mp3'),
+    );
   }
 
   @override

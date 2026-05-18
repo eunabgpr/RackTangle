@@ -104,6 +104,29 @@ class BgmService {
     }
   }
 
+  Future<void> setBgm(String filename) async {
+    if (!_isInitialized) {
+      await initialize();
+    }
+
+    if (_currentBgm == filename) return;
+
+    if (!_bgmEnabled) {
+      _currentBgm = filename;
+      return;
+    }
+
+    _currentBgm = filename;
+
+    await _bgmPlayer.stop();
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    final source = AssetSource('bgm/$filename');
+    await _bgmPlayer.play(source);
+
+    print('BGM switched to: $filename');
+  }
+
   Future<void> stopBgm() async {
     try {
       await _bgmPlayer.stop();

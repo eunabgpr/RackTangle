@@ -58,12 +58,11 @@ class _Level1ScreenState extends State<Level1Screen> {
   void initState() {
     super.initState();
     _isPaused = false;
-    unawaited(_playGameplayBgm());
     _startTimer();
-  }
 
-  Future<void> _playGameplayBgm() async {
-    await _bgmService.playBgm('bgm_gameplay.mp3');
+    unawaited(
+      BgmService().setBgm('bgm_gameplay.mp3'),
+    );
   }
 
   @override
@@ -253,6 +252,7 @@ class _Level1ScreenState extends State<Level1Screen> {
                   child: OutlinedButton(
                     onPressed: () {
                       unawaited(_playSfx('sfx_button.ogg'));
+                      unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                       Navigator.of(dialogContext).pop();
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },
@@ -401,6 +401,7 @@ class _Level1ScreenState extends State<Level1Screen> {
                     child: OutlinedButton(
                       onPressed: () {
                         unawaited(_playSfx('sfx_button.ogg'));
+                        unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                         Navigator.of(dialogContext).pop();
                         Navigator.of(context)
                             .popUntil((route) => route.isFirst);
@@ -568,6 +569,7 @@ class _Level1ScreenState extends State<Level1Screen> {
             child: OutlinedButton(
               onPressed: () {
                 unawaited(_playSfx('sfx_button.ogg'));
+                unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                 Navigator.of(context).pop();
               },
               style: OutlinedButton.styleFrom(
