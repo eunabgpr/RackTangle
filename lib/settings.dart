@@ -146,6 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: 'Background Music',
                 value: _backgroundMusicEnabled,
                 onChanged: (value) => _toggleBackgroundMusic(value),
+                icon: Icons.music_note_outlined,
                 accentColor: _accentColor,
                 panelColor: _panelColor,
                 panelBorderColor: _panelBorderColor,
@@ -156,6 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 label: 'Sound Effects',
                 value: _soundEffectsEnabled,
                 onChanged: (value) => _toggleSoundEffects(value),
+                icon: Icons.speaker_outlined,
                 accentColor: _accentColor,
                 panelColor: _panelColor,
                 panelBorderColor: _panelBorderColor,
@@ -168,6 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Current Level',
                 subtitle: 'Level $_currentLevel of $_maxLevel unlocked',
                 progress: _levelProgress,
+                icon: Icons.bar_chart_outlined,
                 accentColor: _accentColor,
                 panelColor: _panelColor,
                 panelBorderColor: _panelBorderColor,
@@ -178,6 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _ProgressCard(
                 title: 'Modules Completed',
                 value: '$_completedModules/$_totalModules',
+                icon: Icons.auto_stories_outlined,
                 accentColor: _accentColor,
                 panelColor: _panelColor,
                 panelBorderColor: _panelBorderColor,
@@ -232,6 +236,7 @@ class _ToggleSettingCard extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
+    required this.icon,
     required this.accentColor,
     required this.panelColor,
     required this.panelBorderColor,
@@ -241,6 +246,7 @@ class _ToggleSettingCard extends StatelessWidget {
   final String label;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final IconData icon;
   final Color accentColor;
   final Color panelColor;
   final Color panelBorderColor;
@@ -258,6 +264,21 @@ class _ToggleSettingCard extends StatelessWidget {
       ),
       child: Row(
         children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: panelBorderColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: accentColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
               label,
@@ -285,6 +306,7 @@ class _ProgressCard extends StatelessWidget {
     this.value,
     this.subtitle,
     this.progress,
+    required this.icon,
     required this.accentColor,
     required this.panelColor,
     required this.panelBorderColor,
@@ -296,6 +318,7 @@ class _ProgressCard extends StatelessWidget {
   final String? value;
   final String? subtitle;
   final double? progress;
+  final IconData icon;
   final Color accentColor;
   final Color panelColor;
   final Color panelBorderColor;
@@ -312,65 +335,87 @@ class _ProgressCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: panelBorderColor),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              if (value != null)
-                Text(
-                  value!,
-                  style: TextStyle(
-                    color: accentColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-            ],
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: panelBorderColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: accentColor,
+              size: 20,
+            ),
           ),
-          if (progress != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              height: 10,
-              decoration: BoxDecoration(
-                color: panelBorderColor.withOpacity(0.35),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FractionallySizedBox(
-                  widthFactor: progress!.clamp(0, 1),
-                  child: Container(
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    if (value != null)
+                      Text(
+                        value!,
+                        style: TextStyle(
+                          color: accentColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                  ],
+                ),
+                if (progress != null) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    height: 10,
                     decoration: BoxDecoration(
-                      color: accentColor,
+                      color: panelBorderColor.withOpacity(0.35),
                       borderRadius: BorderRadius.circular(16),
                     ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: progress!.clamp(0, 1),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                  const SizedBox(height: 10),
+                ],
+                if (subtitle != null)
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      color: subtleTextColor,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 10),
-          ],
-          if (subtitle != null)
-            Text(
-              subtitle!,
-              style: TextStyle(
-                color: subtleTextColor,
-                fontSize: 14,
-                height: 1.4,
-              ),
-            ),
+          ),
         ],
       ),
     );
