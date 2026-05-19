@@ -12,7 +12,9 @@ class BgmService {
   BgmService._internal();
 
   final AudioPlayer _bgmPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
   bool _bgmEnabled = true;
+  bool _sfxEnabled = true;
   String? _currentBgm;
   bool _isInitialized = false;
 
@@ -24,6 +26,7 @@ class BgmService {
     try {
       final prefs = await SharedPreferences.getInstance();
       _bgmEnabled = prefs.getBool('bgm_enabled') ?? true;
+      _sfxEnabled = prefs.getBool('sfx_enabled') ?? true;
 
       // Set audio context
       await _bgmPlayer.setAudioContext(
@@ -41,8 +44,11 @@ class BgmService {
         ),
       );
 
-      // Set release mode to loop by default
+      // Set release mode to loop by default for BGM
       await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
+
+      // SFX player defaults
+      await _sfxPlayer.setReleaseMode(ReleaseMode.stop);
 
       _isInitialized = true;
       print('BgmService initialized successfully');
@@ -62,6 +68,40 @@ class BgmService {
     } else if (_currentBgm != null) {
       // Resume current BGM
       await playBgm(_currentBgm!);
+    }
+  }
+
+  bool get sfxEnabled => _sfxEnabled;
+
+  Future<void> setSfxEnabled(bool enabled) async {
+    _sfxEnabled = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('sfx_enabled', enabled);
+
+    if (!enabled) {
+      try {
+        await _sfxPlayer.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  /// Play a short sound effect from `assets/sfx/` if SFX are enabled.
+  Future<void> playSfx(String filename) async {
+    try {
+      if (!_isInitialized) {
+        await initialize();
+      }
+
+      if (!_sfxEnabled) return;
+
+      // stop any currently playing sfx to avoid overlap for button-type sounds
+      await _sfxPlayer.stop();
+      final source = AssetSource('sfx/$filename');
+      await _sfxPlayer.play(source);
+    } catch (e) {
+      print('Error playing SFX: $e');
     }
   }
 

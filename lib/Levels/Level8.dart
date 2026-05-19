@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:audioplayers/audioplayers.dart';
+// SFX playback handled by BgmService
 import 'package:flutter/material.dart';
 import 'package:racktangle/Levels/Level9.dart';
 import 'package:racktangle/services/bgm_service.dart';
@@ -84,7 +84,6 @@ class _Level8ScreenState extends State<Level8Screen> {
   ];
 
   final GlobalKey _stackKey = GlobalKey();
-  final AudioPlayer _sfxPlayer = AudioPlayer();
   final BgmService _bgmService = BgmService();
   final ProgressService _progressService = ProgressService();
 
@@ -126,13 +125,7 @@ class _Level8ScreenState extends State<Level8Screen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _sfxPlayer.dispose();
     super.dispose();
-  }
-
-  Future<void> _playSfx(String fileName) async {
-    await _sfxPlayer.stop();
-    await _sfxPlayer.play(AssetSource('sfx/$fileName'));
   }
 
   void _startTimer() {
@@ -166,7 +159,7 @@ class _Level8ScreenState extends State<Level8Screen> {
     if (!_showPrePlayModule) {
       return;
     }
-    unawaited(_playSfx('sfx_button.ogg'));
+    unawaited(BgmService().playSfx('sfx_button.ogg'));
     setState(() {
       _showPrePlayModule = false;
       _isPaused = false;
@@ -284,7 +277,7 @@ class _Level8ScreenState extends State<Level8Screen> {
                 _dialogButton(
                   text: 'Restart Level',
                   onPressed: () {
-                    unawaited(_playSfx('sfx_button.ogg'));
+                    unawaited(BgmService().playSfx('sfx_button.ogg'));
                     Navigator.of(dialogContext).pop();
                     _resetLevel();
                   },
@@ -293,7 +286,7 @@ class _Level8ScreenState extends State<Level8Screen> {
                 _dialogButton(
                   text: 'Back to home',
                   onPressed: () {
-                    unawaited(_playSfx('sfx_button.ogg'));
+                    unawaited(BgmService().playSfx('sfx_button.ogg'));
                     unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -403,7 +396,7 @@ class _Level8ScreenState extends State<Level8Screen> {
                 _dialogButton(
                   text: 'Next Level',
                   onPressed: () async {
-                    unawaited(_playSfx('sfx_button.ogg'));
+                    unawaited(BgmService().playSfx('sfx_button.ogg'));
                     await _progressService.setUnlockedLevel(9);
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).pushReplacement(
@@ -417,7 +410,7 @@ class _Level8ScreenState extends State<Level8Screen> {
                 _dialogButton(
                   text: 'Back to home',
                   onPressed: () {
-                    unawaited(_playSfx('sfx_button.ogg'));
+                    unawaited(BgmService().playSfx('sfx_button.ogg'));
                     unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -443,7 +436,7 @@ class _Level8ScreenState extends State<Level8Screen> {
     _levelCleared = true;
     _timer?.cancel();
     _showingClearDialog = true;
-    unawaited(_playSfx('sfx_complete.mp3'));
+    unawaited(BgmService().playSfx('sfx_complete.mp3'));
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) {
@@ -486,7 +479,7 @@ class _Level8ScreenState extends State<Level8Screen> {
           _switchStartPortByWire[idx] = targetPort;
         }
       });
-      unawaited(_playSfx('sfx_attach.wav'));
+      unawaited(BgmService().playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -496,7 +489,7 @@ class _Level8ScreenState extends State<Level8Screen> {
       }
       _cpuLeftPortByWire[0] = targetPort;
       setState(() {});
-      unawaited(_playSfx('sfx_attach.wav'));
+      unawaited(BgmService().playSfx('sfx_attach.wav'));
     }
   }
 
@@ -507,7 +500,7 @@ class _Level8ScreenState extends State<Level8Screen> {
       }
       _routerEndLeftSwitchPort[0] = targetPort;
       setState(() {});
-      unawaited(_playSfx('sfx_attach.wav'));
+      unawaited(BgmService().playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -517,7 +510,7 @@ class _Level8ScreenState extends State<Level8Screen> {
       }
       _routerEndRightSwitchPort[0] = targetPort;
       setState(() {});
-      unawaited(_playSfx('sfx_attach.wav'));
+      unawaited(BgmService().playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -536,7 +529,7 @@ class _Level8ScreenState extends State<Level8Screen> {
           _switchToLeftCpuEndPort[idx] = targetPort;
         }
       });
-      unawaited(_playSfx('sfx_attach.wav'));
+      unawaited(BgmService().playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -555,7 +548,7 @@ class _Level8ScreenState extends State<Level8Screen> {
           _switchToRightCpuEndPort[idx] = targetPort;
         }
       });
-      unawaited(_playSfx('sfx_attach.wav'));
+      unawaited(BgmService().playSfx('sfx_attach.wav'));
       return;
     }
 
@@ -565,7 +558,7 @@ class _Level8ScreenState extends State<Level8Screen> {
       }
       _cpuRightPortByWire[0] = targetPort;
       setState(() {});
-      unawaited(_playSfx('sfx_attach.wav'));
+      unawaited(BgmService().playSfx('sfx_attach.wav'));
     }
   }
 
@@ -598,7 +591,7 @@ class _Level8ScreenState extends State<Level8Screen> {
     if (local == null) {
       return;
     }
-    unawaited(_playSfx('sfx_remove.wav'));
+    unawaited(BgmService().playSfx('sfx_remove.wav'));
     setState(() {
       _draggingWire = wireIndex;
       _draggingWireEnd = dragEnd;
@@ -677,7 +670,7 @@ class _Level8ScreenState extends State<Level8Screen> {
             height: _buttonSize,
             child: OutlinedButton(
               onPressed: () {
-                unawaited(_playSfx('sfx_button.ogg'));
+                unawaited(BgmService().playSfx('sfx_button.ogg'));
                 unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                 Navigator.of(context).pop();
               },
@@ -710,7 +703,7 @@ class _Level8ScreenState extends State<Level8Screen> {
               height: _buttonSize,
               child: OutlinedButton(
                 onPressed: () {
-                  unawaited(_playSfx('sfx_button.ogg'));
+                  unawaited(BgmService().playSfx('sfx_button.ogg'));
                   _showPauseDialog(0);
                 },
                 style: OutlinedButton.styleFrom(
