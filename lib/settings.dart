@@ -62,6 +62,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     setState(() {
       _currentLevel = unlockedLevel;
+      // Make Modules Completed mirror Current Level
+      _completedModules = _currentLevel;
+      _totalModules = _maxLevel;
     });
   }
 
@@ -93,7 +96,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _resetProgress() async {
     setState(() {
       _currentLevel = 1;
-      _completedModules = 0;
+      _completedModules = 1;
+      _totalModules = _maxLevel;
     });
     await _progressService.resetProgress();
   }
