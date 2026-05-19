@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:racktangle/services/bgm_service.dart';
 
 class HowToPlayScreen extends StatefulWidget {
@@ -12,8 +11,6 @@ class HowToPlayScreen extends StatefulWidget {
 }
 
 class _HowToPlayScreenState extends State<HowToPlayScreen> {
-  final AudioPlayer _sfxPlayer = AudioPlayer();
-
   @override
   void initState() {
     super.initState();
@@ -24,12 +21,15 @@ class _HowToPlayScreenState extends State<HowToPlayScreen> {
 
   @override
   void dispose() {
-    _sfxPlayer.dispose();
     super.dispose();
   }
 
   Future<void> _playButtonSfx() async {
-    await _sfxPlayer.play(AssetSource('sfx/sfx_button.ogg'));
+    try {
+      await BgmService().playSfx('sfx_button.ogg');
+    } catch (e) {
+      print('Error playing button SFX: $e');
+    }
   }
 
   static const Color _backgroundColor = Color(0xFF171725);

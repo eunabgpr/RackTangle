@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:racktangle/Levels/Level10.dart';
 import 'package:racktangle/Levels/Level2.dart';
 import 'package:racktangle/Levels/Level3.dart';
@@ -49,7 +48,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AudioPlayer _sfxPlayer = AudioPlayer();
   final ProgressService _progressService = ProgressService();
 
   static const Color _backgroundColor = Color(0xFF171725);
@@ -68,12 +66,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _sfxPlayer.dispose();
     super.dispose();
   }
 
   Future<void> _playButtonSfx() async {
-    await _sfxPlayer.play(AssetSource('sfx/sfx_button.ogg'));
+    try {
+      await BgmService().playSfx('sfx_button.ogg');
+    } catch (e) {
+      print('Error playing button SFX: $e');
+    }
   }
 
   Widget _screenForLevel(int level) {

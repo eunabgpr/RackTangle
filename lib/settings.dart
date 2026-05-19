@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:racktangle/services/bgm_service.dart';
 import 'package:racktangle/services/progress_service.dart';
 
@@ -12,7 +11,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final AudioPlayer _sfxPlayer = AudioPlayer();
   final BgmService _bgmService = BgmService();
   final ProgressService _progressService = ProgressService();
 
@@ -34,21 +32,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _backgroundMusicEnabled = _bgmService.bgmEnabled;
     unawaited(_loadProgress());
-    unawaited(
-      BgmService().setBgm('bgm_menu.mp3'),
-    );
+    // Ensure BgmService prefs are loaded and reflect in UI
+    unawaited(() async {
+      await _bgmService.initialize();
+      if (!mounted) return;
+      setState(() {
+        _backgroundMusicEnabled = _bgmService.bgmEnabled;
+        _soundEffectsEnabled = _bgmService.sfxEnabled;
+      });
+    }());
+    unawaited(BgmService().setBgm('bgm_menu.mp3'));
   }
 
   @override
   void dispose() {
-    _sfxPlayer.dispose();
     super.dispose();
   }
 
   Future<void> _playButtonSfx() async {
-    await _sfxPlayer.play(AssetSource('sfx/sfx_button.ogg'));
+    await BgmService().playSfx('sfx_button.ogg');
   }
 
   Future<void> _loadProgress() async {
@@ -68,6 +71,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   double get _levelProgress => _currentLevel / _maxLevel;
 
   Future<void> _toggleBackgroundMusic(bool value) async {
+    await _playButtonSfx();
     setState(() {
       _backgroundMusicEnabled = value;
     });
@@ -79,10 +83,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _toggleSoundEffects(bool value) {
+  Future<void> _toggleSoundEffects(bool value) async {
+    if (value == false && _soundEffectsEnabled) {
+      await _playButtonSfx();
+    }
     setState(() {
       _soundEffectsEnabled = value;
     });
+    unawaited(BgmService().setSfxEnabled(value));
   }
 
   Future<void> _resetProgress() async {
@@ -147,7 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _ToggleSettingCard(
                 label: 'Sound Effects',
                 value: _soundEffectsEnabled,
-                onChanged: _toggleSoundEffects,
+                onChanged: (value) => _toggleSoundEffects(value),
                 accentColor: _accentColor,
                 panelColor: _panelColor,
                 panelBorderColor: _panelBorderColor,
