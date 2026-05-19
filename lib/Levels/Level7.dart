@@ -1123,7 +1123,7 @@ class _Level7LearningCard extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      '→ Ready to Play!',
+                      'Ready to Play!',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),

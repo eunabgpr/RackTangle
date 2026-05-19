@@ -1136,7 +1136,7 @@ class _Level1LearningCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     child: const Text(
-                      '→ Ready to Play!',
+                      'Ready to Play!',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,

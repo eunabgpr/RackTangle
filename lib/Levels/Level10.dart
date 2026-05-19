@@ -428,8 +428,9 @@ class _Level10ScreenState extends State<Level10Screen> {
                 const SizedBox(height: 20),
                 _dialogButton(
                   text: 'Back to home',
-                  onPressed: () {
+                  onPressed: () async {
                     unawaited(_playSfx('sfx_button.ogg'));
+                    await _progressService.resetProgress();
                     unawaited(_bgmService.setBgm('bgm_menu.mp3'));
                     Navigator.of(dialogContext).pop();
                     Navigator.of(context).popUntil((route) => route.isFirst);

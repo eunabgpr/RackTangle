@@ -131,13 +131,14 @@ class _Level2ScreenState extends State<Level2Screen> {
 
   void _resetLevel() {
     setState(() {
-      _modemPortByWire = [0, 2];
+      _modemPortByWire = [1, 0];
       _draggingWire = null;
       _dragPosition = null;
       _elapsedSeconds = 0;
       _isPaused = false;
       _levelCleared = false;
       _showingClearDialog = false;
+      _currentCrossingCount = 0;
     });
     _startTimer();
   }
@@ -1117,7 +1118,7 @@ class _PrePlayLearningCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     child: const Text(
-                      '→ Ready to Play!',
+                      'Ready to Play!',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,

@@ -18,10 +18,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool _backgroundMusicEnabled = true;
   bool _soundEffectsEnabled = true;
-  int _currentLevel = 10;
-  int _maxLevel = 14;
-  int _completedModules = 2;
-  int _totalModules = 4;
+  int _currentLevel = 1;
+  int _maxLevel = 10;
+  int _totalModules = 10;
 
   static const Color _backgroundColor = Color(0xFF171725);
   static const Color _panelColor = Color(0xFF222238);
@@ -62,6 +61,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  int get _completedModules {
+    return (_currentLevel - 1).clamp(0, _totalModules);
+  }
+
   double get _levelProgress => _currentLevel / _maxLevel;
 
   Future<void> _toggleBackgroundMusic(bool value) async {
@@ -85,7 +88,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _resetProgress() async {
     setState(() {
       _currentLevel = 1;
-      _completedModules = 0;
     });
     await _progressService.resetProgress();
   }
